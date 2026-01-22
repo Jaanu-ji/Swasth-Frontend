@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "558331846143",
+    "project_id": "swasth-01",
+    "storage_bucket": "swasth-01.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:558331846143:android:7b0a019669e34c58b91bca",
+        "android_client_info": {
+          "package_name": "com.swasthmobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAP7Q54N7wU2z0oUuGfO72fhCOobaer5IU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
