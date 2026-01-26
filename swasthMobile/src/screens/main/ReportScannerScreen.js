@@ -1,5 +1,5 @@
 // ✅ ReportScanner Screen - Enhanced with AI Analysis Display
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,12 +14,14 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useFocusEffect } from '@react-navigation/native';
 
 import { useAuth } from '../../hooks/useAuth';
+import { useMember } from '../../hooks/useMember';
 import figmaTokens from '../../design-system/figmaTokens';
 import { HeaderBar, FigmaCard, FigmaButton } from '../../design-system';
 import { getOCRHistory } from '../../config/api';
 
 export default function ReportScannerScreen({ navigation }) {
   const { user } = useAuth();
+  const { activeMember, isViewingFamily } = useMember();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -33,11 +35,11 @@ export default function ReportScannerScreen({ navigation }) {
     }
 
     try {
-      console.log('[ReportScanner] Loading scans for user:', user.email);
+      console.log('[ReportScanner] Loading scans for user:', user.email, 'member:', activeMember.memberId);
       setLoading(true);
       setError(null);
 
-      const data = await getOCRHistory(user.email);
+      const data = await getOCRHistory(user.email, activeMember.memberId);
       console.log('[ReportScanner] Received data:', data);
 
       // Handle different response formats
@@ -73,13 +75,20 @@ export default function ReportScannerScreen({ navigation }) {
     } finally {
       setLoading(false);
     }
-  }, [user?.email]);
+  }, [user?.email, activeMember.memberId]);
 
   useFocusEffect(
     useCallback(() => {
       loadScans();
     }, [loadScans])
   );
+
+  // Reload when member changes - clear old data first
+  useEffect(() => {
+    setScans([]);
+    setExpandedScan(null);
+    loadScans();
+  }, [activeMember.memberId]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -128,7 +137,11 @@ export default function ReportScannerScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <HeaderBar title="Scan History" onBack={() => navigation.goBack()} />
+        <HeaderBar
+          title="Scan History"
+          subtitle={isViewingFamily ? activeMember.name : null}
+          onBack={() => navigation.goBack()}
+        />
         <ScrollView
           style={styles.scrollView}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}

@@ -1,7 +1,6 @@
 // ✅ Auth Hook - Migrated to React Native CLI
 import { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import crashlytics from '@react-native-firebase/crashlytics';
 import { loginUser, registerUser } from "../config/api";
 
 const AuthContext = createContext(null);
@@ -24,13 +23,6 @@ export function AuthProvider({ children }) {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
         setToken(storedToken);
-
-        // Set user info for Crashlytics on session restore
-        crashlytics().setUserId(parsedUser.email || parsedUser._id);
-        crashlytics().setAttributes({
-          user_name: parsedUser.name || 'Unknown',
-          user_email: parsedUser.email || 'Unknown',
-        });
       }
     } catch (e) {
       console.error("Restore session error:", e);
@@ -56,13 +48,6 @@ export function AuthProvider({ children }) {
       ["swasth_user", JSON.stringify(res.user)],
       ["swasth_token", res.token],
     ]);
-
-    // Set user info for Crashlytics
-    crashlytics().setUserId(res.user.email || res.user._id);
-    crashlytics().setAttributes({
-      user_name: res.user.name || 'Unknown',
-      user_email: res.user.email || 'Unknown',
-    });
 
     setUser(res.user);
     setToken(res.token);
@@ -90,13 +75,6 @@ export function AuthProvider({ children }) {
       ["swasth_user", JSON.stringify(res.user)],
       ["swasth_token", res.token],
     ]);
-
-    // Set user info for Crashlytics
-    crashlytics().setUserId(res.user.email || res.user._id);
-    crashlytics().setAttributes({
-      user_name: res.user.name || 'Unknown',
-      user_email: res.user.email || 'Unknown',
-    });
 
     setUser(res.user);
     setToken(res.token);

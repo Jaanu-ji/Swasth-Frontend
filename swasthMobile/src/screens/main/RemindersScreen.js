@@ -1,19 +1,58 @@
+// Reminders Screen - Fully Functional
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Modal,
+  TextInput,
+  Alert,
+  SafeAreaView,
+  StyleSheet,
+} from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import LinearGradient from "react-native-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+
 import { useAuth } from "../../hooks/useAuth";
 import { useMember } from "../../hooks/useMember";
-import { getReminders } from "../../config/api";
+import {
+  getReminders,
+  addReminder,
+  updateReminder,
+  deleteReminder,
+  toggleReminder,
+} from "../../config/api";
+import figmaTokens from "../../design-system/figmaTokens";
 
 export default function RemindersScreen({ navigation }) {
   const { user } = useAuth();
   const { activeMember, isViewingFamily } = useMember();
-  const [activeTab, setActiveTab] = useState("medicine");
+
+  const [activeTab, setActiveTab] = useState("medication");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [remindersData, setRemindersData] = useState([]);
+
+  // Add Modal State
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    type: "Medication",
+    time: "09:00",
+    frequency: "Daily",
+    doctor: "",
+    location: "",
+    date: new Date(),
+  });
 
   const loadReminders = async () => {
     try {
@@ -37,375 +76,860 @@ export default function RemindersScreen({ navigation }) {
     }, [user?.email, activeMember.memberId])
   );
 
-  // Separate reminders by type
-  const medicineReminders = remindersData
-    .filter(r => r.type === "medicine" || r.type === "medication")
-    .map(r => ({
-      id: r._id || r.id,
-      name: r.title || r.name || "Medicine",
-      dosage: r.dosage || "1 tablet",
-      times: r.times || [r.time] || ["9:00 AM"],
-      taken: r.taken || [false],
-      color: r.color || "#3b82f6",
-    }));
+  // Filter reminders by type
+  const medicationReminders = remindersData.filter(
+    (r) => r.type === "Medication"
+  );
+  const appointmentReminders = remindersData.filter(
+    (r) => r.type === "Appointment"
+  );
 
-  const appointments = remindersData
-    .filter(r => r.type === "appointment")
-    .map(r => ({
-      id: r._id || r.id,
-      title: r.title || "Appointment",
-      doctor: r.doctor || "Doctor",
-      date: r.date ? new Date(r.date).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      }) : "N/A",
-      time: r.time || "N/A",
-      location: r.location || "N/A",
-      color: r.color || "#3b82f6",
-    }));
+  // Handle Mark Taken (update reminder lastTriggered)
+  const handleMarkTaken = async (reminderId) => {
+    try {
+      await updateReminder(reminderId, { lastTriggered: new Date() });
+      loadReminders(); // Refresh
+      Alert.alert("Done", "Marked as taken!");
+    } catch (err) {
+      Alert.alert("Error", err.message || "Failed to mark as taken");
+    }
+  };
 
-  // Shared Header Component
-  const Header = () => (
-    <View
-      style={{
-        backgroundColor: "white",
-        borderBottomWidth: 1,
-        borderBottomColor: "#e5e7eb",
-      }}
+  // Handle Delete
+  const handleDelete = (reminderId) => {
+    Alert.alert("Delete Reminder", "Are you sure you want to delete this reminder?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteReminder(reminderId);
+            loadReminders();
+          } catch (err) {
+            Alert.alert("Error", err.message || "Failed to delete");
+          }
+        },
+      },
+    ]);
+  };
+
+  // Handle Toggle Enable/Disable
+  const handleToggle = async (reminderId) => {
+    try {
+      await toggleReminder(reminderId);
+      loadReminders();
+    } catch (err) {
+      Alert.alert("Error", err.message || "Failed to toggle reminder");
+    }
+  };
+
+  // Open Add Modal
+  const openAddModal = () => {
+    setFormData({
+      title: "",
+      description: "",
+      type: activeTab === "medication" ? "Medication" : "Appointment",
+      time: "09:00",
+      frequency: "Daily",
+      doctor: "",
+      location: "",
+      date: new Date(),
+    });
+    setShowAddModal(true);
+  };
+
+  // Handle Save Reminder
+  const handleSave = async () => {
+    if (!formData.title.trim()) {
+      Alert.alert("Error", "Please enter a title");
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const payload = {
+        userEmail: user.email,
+        memberId: activeMember.memberId || null,
+        memberName: activeMember.name || "Self",
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        type: formData.type,
+        time: formData.time,
+        frequency: formData.frequency,
+      };
+
+      // Add appointment-specific fields
+      if (formData.type === "Appointment") {
+        payload.doctor = formData.doctor.trim();
+        payload.location = formData.location.trim();
+        payload.date = formData.date.toISOString();
+      }
+
+      await addReminder(payload);
+      setShowAddModal(false);
+      loadReminders();
+      Alert.alert("Success", "Reminder added successfully!");
+    } catch (err) {
+      Alert.alert("Error", err.message || "Failed to add reminder");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Time picker handler
+  const onTimeChange = (event, selectedDate) => {
+    setShowTimePicker(false);
+    if (selectedDate) {
+      const hours = String(selectedDate.getHours()).padStart(2, "0");
+      const minutes = String(selectedDate.getMinutes()).padStart(2, "0");
+      setFormData({ ...formData, time: `${hours}:${minutes}` });
+    }
+  };
+
+  // Date picker handler
+  const onDateChange = (event, selectedDate) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setFormData({ ...formData, date: selectedDate });
+    }
+  };
+
+  // Check if taken today
+  const isTakenToday = (reminder) => {
+    if (!reminder.lastTriggered) return false;
+    const lastTriggered = new Date(reminder.lastTriggered);
+    const today = new Date();
+    return (
+      lastTriggered.getDate() === today.getDate() &&
+      lastTriggered.getMonth() === today.getMonth() &&
+      lastTriggered.getFullYear() === today.getFullYear()
+    );
+  };
+
+  // Calculate stats
+  const totalMeds = medicationReminders.length;
+  const takenToday = medicationReminders.filter(isTakenToday).length;
+
+  // Render Add Modal
+  const renderAddModal = () => (
+    <Modal
+      visible={showAddModal}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={() => setShowAddModal(false)}
     >
-      <View
-        style={{
-          padding: 16,
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="arrow-left" size={26} color="#111827" />
-          </TouchableOpacity>
-          <View>
-            <Text style={{ marginLeft: 10, fontSize: 20, color: "#111827" }}>Reminders</Text>
-            {isViewingFamily && (
-              <Text style={{ marginLeft: 10, fontSize: 14, color: "#3b82f6" }}>{activeMember.name}</Text>
-            )}
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>
+              Add {formData.type === "Medication" ? "Medicine" : "Appointment"} Reminder
+            </Text>
+            <TouchableOpacity onPress={() => setShowAddModal(false)}>
+              <Icon name="close" size={24} color={figmaTokens.colors.gray600} />
+            </TouchableOpacity>
           </View>
-        </View>
 
-        <TouchableOpacity
-          style={{
-            backgroundColor: "#3b82f6",
-            padding: 10,
-            borderRadius: 50,
-          }}
-        >
-          <Icon name="plus" size={20} color="white" />
-        </TouchableOpacity>
-      </View>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.modalContent}>
+            {/* Title */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Title *</Text>
+              <TextInput
+                value={formData.title}
+                onChangeText={(val) => setFormData({ ...formData, title: val })}
+                placeholder={formData.type === "Medication" ? "e.g., Paracetamol" : "e.g., Dentist Checkup"}
+                placeholderTextColor={figmaTokens.colors.gray400}
+                style={styles.input}
+              />
+            </View>
 
-      <View style={{ flexDirection: "row", borderTopWidth: 1, borderColor: "#e5e7eb" }}>
-        <TouchableOpacity
-          onPress={() => setActiveTab("medicine")}
-          style={{
-            flex: 1,
-            paddingVertical: 14,
-            alignItems: "center",
-          }}
-        >
-          <Text style={{ color: activeTab === "medicine" ? "#3b82f6" : "#6b7280" }}>
-            Medicine
-          </Text>
-          {activeTab === "medicine" && (
-            <View
-              style={{ height: 2, backgroundColor: "#3b82f6", width: "100%", marginTop: 6 }}
-            />
-          )}
-        </TouchableOpacity>
+            {/* Description */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Description</Text>
+              <TextInput
+                value={formData.description}
+                onChangeText={(val) => setFormData({ ...formData, description: val })}
+                placeholder={formData.type === "Medication" ? "e.g., 1 tablet after meal" : "Notes"}
+                placeholderTextColor={figmaTokens.colors.gray400}
+                style={styles.input}
+                multiline
+              />
+            </View>
 
-        <TouchableOpacity
-          onPress={() => setActiveTab("appointments")}
-          style={{
-            flex: 1,
-            paddingVertical: 14,
-            alignItems: "center",
-          }}
-        >
-          <Text style={{ color: activeTab === "appointments" ? "#3b82f6" : "#6b7280" }}>
-            Appointments
-          </Text>
-          {activeTab === "appointments" && (
-            <View
-              style={{ height: 2, backgroundColor: "#3b82f6", width: "100%", marginTop: 6 }}
-            />
-          )}
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+            {/* Time Picker */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Time</Text>
+              <TouchableOpacity
+                style={styles.pickerButton}
+                onPress={() => setShowTimePicker(true)}
+              >
+                <Icon name="clock-outline" size={20} color={figmaTokens.colors.gray600} />
+                <Text style={styles.pickerText}>{formData.time}</Text>
+              </TouchableOpacity>
+            </View>
 
-  // Show loading state
-  if (loading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: "#f9fafb" }}>
-        <Header />
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <ActivityIndicator size="large" color="#3b82f6" />
-          <Text style={{ marginTop: 12, color: "#6b7280" }}>Loading reminders...</Text>
-        </View>
-      </View>
-    );
-  }
+            {showTimePicker && (
+              <DateTimePicker
+                value={new Date(`2000-01-01T${formData.time}:00`)}
+                mode="time"
+                is24Hour={true}
+                display="default"
+                onChange={onTimeChange}
+              />
+            )}
 
-  // Show error state
-  if (error) {
-    return (
-      <View style={{ flex: 1, backgroundColor: "#f9fafb" }}>
-        <Header />
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 20 }}>
-          <Icon name="alert-circle" size={48} color="#ef4444" />
-          <Text style={{ marginTop: 12, color: "#111827", fontSize: 16, textAlign: "center" }}>
-            {error}
-          </Text>
-          <TouchableOpacity
-            onPress={loadReminders}
-            style={{
-              marginTop: 20,
-              backgroundColor: "#3b82f6",
-              paddingHorizontal: 24,
-              paddingVertical: 12,
-              borderRadius: 12,
-            }}
-          >
-            <Text style={{ color: "white", fontSize: 16 }}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
+            {/* Frequency (for medication) */}
+            {formData.type === "Medication" && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Frequency</Text>
+                <View style={styles.frequencyRow}>
+                  {["Daily", "Weekly", "Once"].map((freq) => (
+                    <TouchableOpacity
+                      key={freq}
+                      style={[
+                        styles.frequencyChip,
+                        formData.frequency === freq && styles.frequencyChipActive,
+                      ]}
+                      onPress={() => setFormData({ ...formData, frequency: freq })}
+                    >
+                      <Text
+                        style={[
+                          styles.frequencyText,
+                          formData.frequency === freq && styles.frequencyTextActive,
+                        ]}
+                      >
+                        {freq}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
 
-  // Calculate medicine stats
-  const totalDoses = medicineReminders.reduce((sum, med) => sum + med.times.length, 0);
-  const takenDoses = medicineReminders.reduce((sum, med) =>
-    sum + med.taken.filter(t => t).length, 0
-  );
-
-  return (
-    <View style={{ flex: 1, backgroundColor: "#f9fafb" }}>
-      <Header />
-
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
-        {activeTab === "medicine" ? (
-          <>
-            <LinearGradient
-              colors={["#3b82f6", "#8b5cf6"]}
-              style={{
-                borderRadius: 20,
-                padding: 20,
-                marginBottom: 20,
-              }}
-            >
-              <Text style={{ color: "white", marginBottom: 10, fontSize: 18 }}>
-                Today's Medications
-              </Text>
-
-              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                <View>
-                  <Text style={{ color: "white", fontSize: 32 }}>
-                    {takenDoses} / {totalDoses}
-                  </Text>
-                  <Text style={{ color: "#dbeafe" }}>doses taken</Text>
+            {/* Appointment-specific fields */}
+            {formData.type === "Appointment" && (
+              <>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Date</Text>
+                  <TouchableOpacity
+                    style={styles.pickerButton}
+                    onPress={() => setShowDatePicker(true)}
+                  >
+                    <Icon name="calendar" size={20} color={figmaTokens.colors.gray600} />
+                    <Text style={styles.pickerText}>
+                      {formData.date.toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
 
-                <View style={{ backgroundColor: "rgba(255,255,255,0.2)", padding: 12, borderRadius: 50 }}>
-                  <Icon name="pill" size={34} color="white" />
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={formData.date}
+                    mode="date"
+                    display="default"
+                    onChange={onDateChange}
+                    minimumDate={new Date()}
+                  />
+                )}
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Doctor Name</Text>
+                  <TextInput
+                    value={formData.doctor}
+                    onChangeText={(val) => setFormData({ ...formData, doctor: val })}
+                    placeholder="e.g., Dr. Smith"
+                    placeholderTextColor={figmaTokens.colors.gray400}
+                    style={styles.input}
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Location</Text>
+                  <TextInput
+                    value={formData.location}
+                    onChangeText={(val) => setFormData({ ...formData, location: val })}
+                    placeholder="e.g., City Hospital"
+                    placeholderTextColor={figmaTokens.colors.gray400}
+                    style={styles.input}
+                  />
+                </View>
+              </>
+            )}
+
+            {/* Save Button */}
+            <TouchableOpacity
+              onPress={handleSave}
+              disabled={saving}
+              style={styles.saveButton}
+            >
+              {saving ? (
+                <ActivityIndicator size="small" color={figmaTokens.colors.white} />
+              ) : (
+                <Text style={styles.saveButtonText}>Save Reminder</Text>
+              )}
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Loading State
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Icon name="arrow-left" size={26} color={figmaTokens.colors.gray900} />
+          </TouchableOpacity>
+          <View>
+            <Text style={styles.headerTitle}>Reminders</Text>
+            {isViewingFamily && (
+              <Text style={styles.headerSubtitle}>{activeMember.name}</Text>
+            )}
+          </View>
+          <View style={{ width: 40 }} />
+        </View>
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color={figmaTokens.colors.blue500} />
+          <Text style={styles.loadingText}>Loading reminders...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Error State
+  if (error) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Icon name="arrow-left" size={26} color={figmaTokens.colors.gray900} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Reminders</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        <View style={styles.centerContent}>
+          <Icon name="alert-circle" size={48} color={figmaTokens.colors.red500} />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={loadReminders} style={styles.retryButton}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Icon name="arrow-left" size={26} color={figmaTokens.colors.gray900} />
+        </TouchableOpacity>
+        <View>
+          <Text style={styles.headerTitle}>Reminders</Text>
+          {isViewingFamily && (
+            <Text style={styles.headerSubtitle}>{activeMember.name}</Text>
+          )}
+        </View>
+        <TouchableOpacity onPress={openAddModal} style={styles.addButton}>
+          <Icon name="plus" size={20} color={figmaTokens.colors.white} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Tabs */}
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity
+          onPress={() => setActiveTab("medication")}
+          style={[styles.tab, activeTab === "medication" && styles.tabActive]}
+        >
+          <Text style={[styles.tabText, activeTab === "medication" && styles.tabTextActive]}>
+            Medicine
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setActiveTab("appointment")}
+          style={[styles.tab, activeTab === "appointment" && styles.tabActive]}
+        >
+          <Text style={[styles.tabText, activeTab === "appointment" && styles.tabTextActive]}>
+            Appointments
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {activeTab === "medication" ? (
+          <>
+            {/* Stats Card */}
+            <LinearGradient
+              colors={[figmaTokens.colors.blue500, figmaTokens.colors.purple500]}
+              style={styles.statsCard}
+            >
+              <Text style={styles.statsTitle}>Today's Medications</Text>
+              <View style={styles.statsRow}>
+                <View>
+                  <Text style={styles.statsValue}>
+                    {takenToday} / {totalMeds}
+                  </Text>
+                  <Text style={styles.statsLabel}>doses taken</Text>
+                </View>
+                <View style={styles.statsIcon}>
+                  <Icon name="pill" size={34} color={figmaTokens.colors.white} />
                 </View>
               </View>
             </LinearGradient>
 
-            <Text style={{ marginBottom: 10, fontSize: 18, color: "#111827" }}>Medications</Text>
+            <Text style={styles.sectionTitle}>Medications</Text>
 
-            {medicineReminders.length === 0 ? (
-              <View
-                style={{
-                  backgroundColor: "white",
-                  borderRadius: 20,
-                  padding: 32,
-                  alignItems: "center",
-                  elevation: 2,
-                }}
-              >
-                <Icon name="pill" size={48} color="#d1d5db" />
-                <Text style={{ marginTop: 12, color: "#6b7280", textAlign: "center" }}>
-                  No medicine reminders set
-                </Text>
-                <Text style={{ marginTop: 4, color: "#9ca3af", fontSize: 14, textAlign: "center" }}>
-                  Add reminders to track your medications
-                </Text>
+            {medicationReminders.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <Icon name="pill" size={48} color={figmaTokens.colors.gray300} />
+                <Text style={styles.emptyTitle}>No medicine reminders</Text>
+                <Text style={styles.emptyText}>Tap + to add a reminder</Text>
               </View>
             ) : (
-              medicineReminders.map((med) => (
-              <View
-                key={med.id}
-                style={{
-                  backgroundColor: "white",
-                  borderRadius: 20,
-                  padding: 16,
-                  marginBottom: 16,
-                  elevation: 2,
-                }}
-              >
-                <View style={{ flexDirection: "row", marginBottom: 10 }}>
-                  <View
-                    style={{
-                      backgroundColor: med.color,
-                      padding: 10,
-                      borderRadius: 14,
-                      marginRight: 12,
-                    }}
-                  >
-                    <Icon name="pill" size={20} color="white" />
-                  </View>
-                  <View>
-                    <Text style={{ fontSize: 16, color: "#111827" }}>{med.name}</Text>
-                    <Text style={{ color: "#6b7280" }}>{med.dosage}</Text>
-                  </View>
-                </View>
-
-                {med.times.map((time, index) => (
-                  <View
-                    key={index}
-                    style={{
-                      backgroundColor: med.taken[index] ? "#ecfdf5" : "#f3f4f6",
-                      padding: 12,
-                      borderRadius: 14,
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      marginBottom: 10,
-                      alignItems: "center",
-                    }}
-                  >
-                    <View style={{ flexDirection: "row", alignItems: "center" }}>
-                      <Icon name="clock-outline" size={18} color="#6b7280" />
-                      <Text style={{ marginLeft: 6, color: "#111827" }}>{time}</Text>
+              medicationReminders.map((reminder) => {
+                const taken = isTakenToday(reminder);
+                return (
+                  <View key={reminder._id} style={styles.reminderCard}>
+                    <View style={styles.reminderHeader}>
+                      <View style={[styles.reminderIcon, { backgroundColor: figmaTokens.colors.blue500 }]}>
+                        <Icon name="pill" size={20} color={figmaTokens.colors.white} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.reminderTitle}>{reminder.title}</Text>
+                        <Text style={styles.reminderDesc}>
+                          {reminder.description || reminder.frequency}
+                        </Text>
+                      </View>
+                      <TouchableOpacity onPress={() => handleDelete(reminder._id)}>
+                        <Icon name="delete-outline" size={22} color={figmaTokens.colors.red500} />
+                      </TouchableOpacity>
                     </View>
 
-                    {med.taken[index] ? (
-                      <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <Icon name="check" size={18} color="#16a34a" />
-                        <Text style={{ marginLeft: 4, color: "#16a34a" }}>Taken</Text>
+                    <View style={[styles.timeRow, taken && styles.timeRowTaken]}>
+                      <View style={styles.timeLeft}>
+                        <Icon name="clock-outline" size={18} color={figmaTokens.colors.gray500} />
+                        <Text style={styles.timeText}>{reminder.time}</Text>
                       </View>
-                    ) : (
-                      <TouchableOpacity
-                        style={{
-                          backgroundColor: "#3b82f6",
-                          paddingVertical: 6,
-                          paddingHorizontal: 12,
-                          borderRadius: 10,
-                        }}
-                      >
-                        <Text style={{ color: "white" }}>Mark Taken</Text>
-                      </TouchableOpacity>
-                    )}
+
+                      {taken ? (
+                        <View style={styles.takenBadge}>
+                          <Icon name="check" size={16} color={figmaTokens.colors.green600} />
+                          <Text style={styles.takenText}>Taken</Text>
+                        </View>
+                      ) : (
+                        <TouchableOpacity
+                          style={styles.markButton}
+                          onPress={() => handleMarkTaken(reminder._id)}
+                        >
+                          <Text style={styles.markButtonText}>Mark Taken</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   </View>
-                ))}
-              </View>
-            ))
+                );
+              })
             )}
           </>
         ) : (
           <>
+            {/* Appointments Stats */}
             <LinearGradient
-              colors={["#22c55e", "#10b981"]}
-              style={{
-                borderRadius: 20,
-                padding: 20,
-                marginBottom: 20,
-              }}
+              colors={[figmaTokens.colors.green500, figmaTokens.colors.emerald500]}
+              style={styles.statsCard}
             >
-              <Text style={{ color: "white", fontSize: 18, marginBottom: 10 }}>
-                Upcoming Appointments
-              </Text>
-
-              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+              <Text style={styles.statsTitle}>Upcoming Appointments</Text>
+              <View style={styles.statsRow}>
                 <View>
-                  <Text style={{ color: "white", fontSize: 32 }}>{appointments.length}</Text>
-                  <Text style={{ color: "#dcfce7" }}>scheduled</Text>
+                  <Text style={styles.statsValue}>{appointmentReminders.length}</Text>
+                  <Text style={styles.statsLabel}>scheduled</Text>
                 </View>
-
-                <View style={{ backgroundColor: "rgba(255,255,255,0.2)", padding: 12, borderRadius: 50 }}>
-                  <Icon name="calendar" size={34} color="white" />
+                <View style={styles.statsIcon}>
+                  <Icon name="calendar" size={34} color={figmaTokens.colors.white} />
                 </View>
               </View>
             </LinearGradient>
 
-            <Text style={{ marginBottom: 10, fontSize: 18, color: "#111827" }}>Schedule</Text>
+            <Text style={styles.sectionTitle}>Schedule</Text>
 
-            {appointments.length === 0 ? (
-              <View
-                style={{
-                  backgroundColor: "white",
-                  borderRadius: 20,
-                  padding: 32,
-                  alignItems: "center",
-                  elevation: 2,
-                }}
-              >
-                <Icon name="calendar" size={48} color="#d1d5db" />
-                <Text style={{ marginTop: 12, color: "#6b7280", textAlign: "center" }}>
-                  No appointments scheduled
-                </Text>
-                <Text style={{ marginTop: 4, color: "#9ca3af", fontSize: 14, textAlign: "center" }}>
-                  Add appointments to keep track of them
-                </Text>
+            {appointmentReminders.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <Icon name="calendar" size={48} color={figmaTokens.colors.gray300} />
+                <Text style={styles.emptyTitle}>No appointments scheduled</Text>
+                <Text style={styles.emptyText}>Tap + to add an appointment</Text>
               </View>
             ) : (
-              appointments.map((app) => (
-              <TouchableOpacity
-                key={app.id}
-                style={{
-                  backgroundColor: "white",
-                  borderRadius: 20,
-                  padding: 16,
-                  marginBottom: 14,
-                  elevation: 2,
-                  flexDirection: "row",
-                }}
-              >
-                <View
-                  style={{
-                    backgroundColor: app.color,
-                    padding: 10,
-                    borderRadius: 14,
-                    marginRight: 14,
-                  }}
-                >
-                  <Icon name="calendar" size={22} color="white" />
-                </View>
-
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: "#111827", fontSize: 16 }}>{app.title}</Text>
-                  <Text style={{ color: "#6b7280", marginBottom: 6 }}>{app.doctor}</Text>
-
-                  <View style={{ flexDirection: "row", marginBottom: 4 }}>
-                    <Icon name="clock-outline" size={16} color="#6b7280" />
-                    <Text style={{ marginLeft: 4, color: "#6b7280", fontSize: 12 }}>
-                      {app.time}
-                    </Text>
+              appointmentReminders.map((appointment) => (
+                <View key={appointment._id} style={styles.appointmentCard}>
+                  <View style={[styles.reminderIcon, { backgroundColor: figmaTokens.colors.green500 }]}>
+                    <Icon name="calendar" size={22} color={figmaTokens.colors.white} />
                   </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.reminderTitle}>{appointment.title}</Text>
+                    <Text style={styles.reminderDesc}>{appointment.doctor || "Doctor"}</Text>
 
-                  <Text style={{ color: "#6b7280", fontSize: 12 }}>{app.date}</Text>
-                  <Text style={{ color: "#6b7280", marginTop: 6 }}>{app.location}</Text>
+                    <View style={styles.appointmentMeta}>
+                      <Icon name="clock-outline" size={14} color={figmaTokens.colors.gray500} />
+                      <Text style={styles.metaText}>{appointment.time}</Text>
+                    </View>
+
+                    {appointment.date && (
+                      <View style={styles.appointmentMeta}>
+                        <Icon name="calendar-outline" size={14} color={figmaTokens.colors.gray500} />
+                        <Text style={styles.metaText}>
+                          {new Date(appointment.date).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </Text>
+                      </View>
+                    )}
+
+                    {appointment.location && (
+                      <View style={styles.appointmentMeta}>
+                        <Icon name="map-marker-outline" size={14} color={figmaTokens.colors.gray500} />
+                        <Text style={styles.metaText}>{appointment.location}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <TouchableOpacity onPress={() => handleDelete(appointment._id)}>
+                    <Icon name="delete-outline" size={22} color={figmaTokens.colors.red500} />
+                  </TouchableOpacity>
                 </View>
-
-                <Icon name="chevron-right" size={20} color="#9ca3af" />
-              </TouchableOpacity>
-            ))
+              ))
             )}
           </>
         )}
       </ScrollView>
-    </View>
+
+      {renderAddModal()}
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: figmaTokens.colors.gray50,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: figmaTokens.colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: figmaTokens.colors.gray200,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: figmaTokens.colors.gray900,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: figmaTokens.colors.blue500,
+  },
+  addButton: {
+    backgroundColor: figmaTokens.colors.blue500,
+    padding: 10,
+    borderRadius: 50,
+  },
+  tabsContainer: {
+    flexDirection: "row",
+    backgroundColor: figmaTokens.colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: figmaTokens.colors.gray200,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  tabActive: {
+    borderBottomWidth: 2,
+    borderBottomColor: figmaTokens.colors.blue500,
+  },
+  tabText: {
+    fontSize: 15,
+    color: figmaTokens.colors.gray500,
+  },
+  tabTextActive: {
+    color: figmaTokens.colors.blue500,
+    fontWeight: "600",
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: figmaTokens.colors.gray500,
+  },
+  errorText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: figmaTokens.colors.gray700,
+    textAlign: "center",
+  },
+  retryButton: {
+    marginTop: 20,
+    backgroundColor: figmaTokens.colors.blue500,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    color: figmaTokens.colors.white,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 80,
+  },
+  statsCard: {
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
+  },
+  statsTitle: {
+    color: figmaTokens.colors.white,
+    fontSize: 18,
+    marginBottom: 10,
+  },
+  statsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  statsValue: {
+    color: figmaTokens.colors.white,
+    fontSize: 32,
+    fontWeight: "700",
+  },
+  statsLabel: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 14,
+  },
+  statsIcon: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    padding: 12,
+    borderRadius: 50,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: figmaTokens.colors.gray900,
+    marginBottom: 12,
+  },
+  emptyCard: {
+    backgroundColor: figmaTokens.colors.white,
+    borderRadius: 20,
+    padding: 32,
+    alignItems: "center",
+    ...figmaTokens.shadows.sm,
+  },
+  emptyTitle: {
+    marginTop: 12,
+    fontSize: 16,
+    color: figmaTokens.colors.gray600,
+  },
+  emptyText: {
+    marginTop: 4,
+    fontSize: 14,
+    color: figmaTokens.colors.gray400,
+  },
+  reminderCard: {
+    backgroundColor: figmaTokens.colors.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    ...figmaTokens.shadows.sm,
+  },
+  reminderHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 12,
+  },
+  reminderIcon: {
+    padding: 10,
+    borderRadius: 14,
+  },
+  reminderTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: figmaTokens.colors.gray900,
+  },
+  reminderDesc: {
+    fontSize: 14,
+    color: figmaTokens.colors.gray500,
+    marginTop: 2,
+  },
+  timeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: figmaTokens.colors.gray100,
+    padding: 12,
+    borderRadius: 12,
+  },
+  timeRowTaken: {
+    backgroundColor: figmaTokens.colors.green50,
+  },
+  timeLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  timeText: {
+    fontSize: 14,
+    color: figmaTokens.colors.gray700,
+  },
+  takenBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  takenText: {
+    color: figmaTokens.colors.green600,
+    fontWeight: "600",
+  },
+  markButton: {
+    backgroundColor: figmaTokens.colors.blue500,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+  },
+  markButtonText: {
+    color: figmaTokens.colors.white,
+    fontWeight: "600",
+  },
+  appointmentCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: figmaTokens.colors.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    gap: 12,
+    ...figmaTokens.shadows.sm,
+  },
+  appointmentMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 4,
+  },
+  metaText: {
+    fontSize: 13,
+    color: figmaTokens.colors.gray500,
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: figmaTokens.colors.white,
+    marginTop: 50,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: figmaTokens.colors.gray200,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: figmaTokens.colors.gray900,
+  },
+  modalContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: figmaTokens.colors.gray600,
+    marginBottom: 6,
+  },
+  input: {
+    backgroundColor: figmaTokens.colors.gray50,
+    borderWidth: 1,
+    borderColor: figmaTokens.colors.gray200,
+    color: figmaTokens.colors.gray900,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 10,
+    fontSize: 15,
+  },
+  pickerButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: figmaTokens.colors.gray50,
+    borderWidth: 1,
+    borderColor: figmaTokens.colors.gray200,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  pickerText: {
+    fontSize: 15,
+    color: figmaTokens.colors.gray900,
+  },
+  frequencyRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  frequencyChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: figmaTokens.colors.gray100,
+  },
+  frequencyChipActive: {
+    backgroundColor: figmaTokens.colors.blue500,
+  },
+  frequencyText: {
+    color: figmaTokens.colors.gray600,
+    fontWeight: "500",
+  },
+  frequencyTextActive: {
+    color: figmaTokens.colors.white,
+  },
+  saveButton: {
+    backgroundColor: figmaTokens.colors.blue500,
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginTop: 24,
+    alignItems: "center",
+  },
+  saveButtonText: {
+    color: figmaTokens.colors.white,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+});

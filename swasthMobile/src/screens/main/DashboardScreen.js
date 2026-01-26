@@ -140,7 +140,7 @@ export default function DashboardScreen({ navigation }) {
     { title: 'Health Tracker', icon: 'heart-pulse', screen: 'HealthTracker', color: figmaTokens.colors.rose500 },
     { title: 'Family Profiles', icon: 'account-group', screen: 'Family', color: figmaTokens.colors.blue500 },
     { title: 'Meal Planner', icon: 'food-apple', screen: 'Diet', color: figmaTokens.colors.green500 },
-    { title: 'Fitness', icon: 'dumbbell', screen: 'Workouts', color: figmaTokens.colors.orange500 },
+    { title: 'Health History', icon: 'folder-heart', screen: 'HealthHistory', color: figmaTokens.colors.orange500 },
     { title: 'Analytics', icon: 'chart-line', screen: 'HealthAnalytics', color: figmaTokens.colors.purple500 },
     { title: 'Reminders', icon: 'bell', screen: 'Reminders', color: figmaTokens.colors.yellow500 },
   ];

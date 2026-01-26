@@ -1,7 +1,7 @@
 apply plugin: "com.android.application"
 apply plugin: "com.facebook.react"
 apply plugin: 'com.google.gms.google-services'
-apply plugin: 'com.google.firebase.crashlytics'
+// apply plugin: 'com.google.firebase.crashlytics' // Disabled - causing DataStore crash
 
 react {
     /* Folders */
@@ -107,6 +107,12 @@ dependencies {
     implementation("com.facebook.react:react-android")
     // Flipper disabled - not required
     // implementation("com.facebook.react:flipper-integration")
+
+    // Fix Firebase DataStore crash
+    implementation("androidx.datastore:datastore:1.0.0")
+    implementation("androidx.datastore:datastore-core:1.0.0")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.datastore:datastore-preferences-core:1.0.0")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

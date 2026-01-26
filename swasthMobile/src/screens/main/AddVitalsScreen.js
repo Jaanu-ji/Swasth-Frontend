@@ -187,48 +187,52 @@ export default function AddVitals({ navigation }) {
             {selectedVitalData?.dual ? (
               <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                 <View style={{ width: "48%" }}>
-                  <Text style={{ marginBottom: 6 }}>Systolic</Text>
+                  <Text style={{ marginBottom: 6, color: "#111827" }}>Systolic</Text>
                   <TextInput
                     keyboardType="numeric"
                     value={value1}
                     onChangeText={setValue1}
                     placeholder="120"
-                    style={{ borderWidth: 1, padding: 12, borderRadius: 10 }}
+                    placeholderTextColor="#9ca3af"
+                    style={{ borderWidth: 1, borderColor: "#e5e7eb", padding: 12, borderRadius: 10, color: "#111827", backgroundColor: "#f9fafb" }}
                   />
                 </View>
 
                 <View style={{ width: "48%" }}>
-                  <Text style={{ marginBottom: 6 }}>Diastolic</Text>
+                  <Text style={{ marginBottom: 6, color: "#111827" }}>Diastolic</Text>
                   <TextInput
                     keyboardType="numeric"
                     value={value2}
                     onChangeText={setValue2}
                     placeholder="80"
-                    style={{ borderWidth: 1, padding: 12, borderRadius: 10 }}
+                    placeholderTextColor="#9ca3af"
+                    style={{ borderWidth: 1, borderColor: "#e5e7eb", padding: 12, borderRadius: 10, color: "#111827", backgroundColor: "#f9fafb" }}
                   />
                 </View>
               </View>
             ) : (
               <View>
-                <Text style={{ marginBottom: 6 }}>Value</Text>
+                <Text style={{ marginBottom: 6, color: "#111827" }}>Value</Text>
                 <TextInput
                   keyboardType="numeric"
                   value={value1}
                   onChangeText={setValue1}
                   placeholder="Enter value"
-                  style={{ borderWidth: 1, padding: 12, borderRadius: 10 }}
+                  placeholderTextColor="#9ca3af"
+                  style={{ borderWidth: 1, borderColor: "#e5e7eb", padding: 12, borderRadius: 10, color: "#111827", backgroundColor: "#f9fafb" }}
                 />
               </View>
             )}
 
             <View style={{ marginTop: 12 }}>
-              <Text style={{ marginBottom: 6 }}>Notes</Text>
+              <Text style={{ marginBottom: 6, color: "#111827" }}>Notes</Text>
               <TextInput
                 value={notes}
                 onChangeText={setNotes}
                 placeholder="Optional notes..."
+                placeholderTextColor="#9ca3af"
                 multiline
-                style={{ borderWidth: 1, padding: 12, borderRadius: 10, height: 80 }}
+                style={{ borderWidth: 1, borderColor: "#e5e7eb", padding: 12, borderRadius: 10, height: 80, color: "#111827", backgroundColor: "#f9fafb", textAlignVertical: "top" }}
               />
             </View>
           </View>

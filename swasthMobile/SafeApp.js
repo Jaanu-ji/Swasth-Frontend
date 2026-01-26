@@ -4,6 +4,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 
 import { AuthProvider } from './src/hooks/useAuth';
+import { MemberProvider } from './src/hooks/useMember';
 import AppNavigator from './src/navigation/AppNavigator';
 
 // Error Boundary Component
@@ -45,7 +46,9 @@ export default function SafeApp() {
     <PaperProvider>
       <ErrorBoundary>
         <AuthProvider>
-          <AppNavigator />
+          <MemberProvider>
+            <AppNavigator />
+          </MemberProvider>
         </AuthProvider>
       </ErrorBoundary>
     </PaperProvider>

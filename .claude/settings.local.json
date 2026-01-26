@@ -69,7 +69,10 @@
       "Bash(./gradlew.bat app:assembleDebug:*)",
       "Bash(npx expo start:*)",
       "Bash(timeout:*)",
-      "Bash(ping:*)"
+      "Bash(ping:*)",
+      "Bash(adb kill-server:*)",
+      "Bash(adb start-server:*)",
+      "Bash(git add:*)"
     ]
   }
 }

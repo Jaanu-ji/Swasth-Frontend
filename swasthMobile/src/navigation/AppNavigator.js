@@ -21,6 +21,7 @@ import DietScreen from '../screens/main/DietScreen';
 import MealPlannerScreen from '../screens/main/MealPlannerScreen';
 import AddMealScreen from '../screens/main/AddMealScreen';
 import WorkoutsScreen from '../screens/main/WorkoutsScreen';
+import HealthHistoryScreen from '../screens/main/HealthHistoryScreen';
 import ExerciseVideosScreen from '../screens/main/ExerciseVideosScreen';
 import StepCounterScreen from '../screens/main/StepCounterScreen';
 import RemindersScreen from '../screens/main/RemindersScreen';
@@ -73,6 +74,7 @@ export default function AppNavigator() {
             <Stack.Screen name="MealPlanner" component={MealPlannerScreen} />
             <Stack.Screen name="AddMeal" component={AddMealScreen} />
             <Stack.Screen name="Workouts" component={WorkoutsScreen} />
+            <Stack.Screen name="HealthHistory" component={HealthHistoryScreen} />
             <Stack.Screen name="ExerciseVideos" component={ExerciseVideosScreen} />
             <Stack.Screen name="StepCounter" component={StepCounterScreen} />
             <Stack.Screen name="Reminders" component={RemindersScreen} />

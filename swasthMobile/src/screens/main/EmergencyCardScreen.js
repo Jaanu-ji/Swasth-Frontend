@@ -1,4 +1,4 @@
-// ✅ Emergency Card Screen - FULLY EDITABLE with Backend
+// Emergency Card Screen - Light Theme (Matching App Design)
 import React, { useState } from "react";
 import {
   View,
@@ -10,6 +10,8 @@ import {
   Modal,
   TextInput,
   Alert,
+  SafeAreaView,
+  StyleSheet,
 } from "react-native";
 import {
   ArrowLeft,
@@ -180,56 +182,48 @@ export default function EmergencyCard({ navigation }) {
     setFormData({ ...formData, [field]: newArray });
   };
 
+  // Loading State
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: figmaTokens.colors.gray900 }}>
-        <View style={{ paddingTop: 60, paddingHorizontal: 20 }}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <ArrowLeft size={24} color={figmaTokens.colors.white} />
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <ArrowLeft size={24} color={figmaTokens.colors.gray900} />
           </TouchableOpacity>
+          <Text style={styles.headerTitle}>Emergency Card</Text>
+          <View style={{ width: 36 }} />
         </View>
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={figmaTokens.colors.red500} />
-          <Text style={{ color: figmaTokens.colors.gray400, marginTop: 16, fontSize: 16 }}>
-            Loading emergency card...
-          </Text>
+          <Text style={styles.loadingText}>Loading emergency card...</Text>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
+  // Error State
   if (error) {
     return (
-      <View style={{ flex: 1, backgroundColor: figmaTokens.colors.gray900 }}>
-        <View style={{ paddingTop: 60, paddingHorizontal: 20 }}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <ArrowLeft size={24} color={figmaTokens.colors.white} />
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <ArrowLeft size={24} color={figmaTokens.colors.gray900} />
           </TouchableOpacity>
+          <Text style={styles.headerTitle}>Emergency Card</Text>
+          <View style={{ width: 36 }} />
         </View>
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 20 }}>
+        <View style={styles.centerContent}>
           <AlertCircle size={48} color={figmaTokens.colors.red500} />
-          <Text style={{ color: figmaTokens.colors.white, fontSize: 18, fontWeight: "600", marginTop: 16 }}>
-            {error}
-          </Text>
-          <TouchableOpacity
-            onPress={loadEmergencyCard}
-            style={{
-              backgroundColor: figmaTokens.colors.red500,
-              paddingVertical: 12,
-              paddingHorizontal: 24,
-              borderRadius: 12,
-              marginTop: 20,
-            }}
-          >
-            <Text style={{ color: figmaTokens.colors.white, fontSize: 16, fontWeight: "600" }}>
-              Retry
-            </Text>
+          <Text style={styles.errorTitle}>{error}</Text>
+          <TouchableOpacity onPress={loadEmergencyCard} style={styles.retryButton}>
+            <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
+  // Edit Modal
   const renderEditModal = () => (
     <Modal
       visible={isEditModalVisible}
@@ -237,310 +231,192 @@ export default function EmergencyCard({ navigation }) {
       transparent={true}
       onRequestClose={() => setIsEditModalVisible(false)}
     >
-      <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }}>
-        <View style={{
-          flex: 1,
-          backgroundColor: figmaTokens.colors.gray900,
-          marginTop: 50,
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
-        }}>
-          <View style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            paddingHorizontal: 20,
-            paddingVertical: 16,
-            borderBottomWidth: 1,
-            borderBottomColor: figmaTokens.colors.gray800,
-          }}>
-            <Text style={{ color: figmaTokens.colors.white, fontSize: 20, fontWeight: "700" }}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>
               {emergencyData ? "Edit Emergency Card" : "Create Emergency Card"}
             </Text>
             <TouchableOpacity onPress={() => setIsEditModalVisible(false)}>
-              <X size={24} color={figmaTokens.colors.gray400} />
+              <X size={24} color={figmaTokens.colors.gray600} />
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20 }}>
-            <Text style={{ color: figmaTokens.colors.white, fontSize: 18, fontWeight: "600", marginBottom: 12 }}>
-              Personal Information
-            </Text>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.modalContent}>
+            <Text style={styles.sectionTitle}>Personal Information</Text>
 
-            <View style={{ marginBottom: 16 }}>
-              <Text style={{ color: figmaTokens.colors.gray400, fontSize: 14, marginBottom: 6 }}>Full Name *</Text>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Full Name *</Text>
               <TextInput
                 value={formData.name}
                 onChangeText={(val) => setFormData({ ...formData, name: val })}
                 placeholder="Enter full name"
-                placeholderTextColor={figmaTokens.colors.gray600}
-                style={{
-                  backgroundColor: figmaTokens.colors.gray800,
-                  color: figmaTokens.colors.white,
-                  paddingHorizontal: 16,
-                  paddingVertical: 12,
-                  borderRadius: 12,
-                  fontSize: 16,
-                }}
+                placeholderTextColor={figmaTokens.colors.gray400}
+                style={styles.input}
               />
             </View>
 
-            <View style={{ flexDirection: "row", gap: 12, marginBottom: 16 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: figmaTokens.colors.gray400, fontSize: 14, marginBottom: 6 }}>Age</Text>
+            <View style={styles.rowInputs}>
+              <View style={styles.halfInput}>
+                <Text style={styles.inputLabel}>Age</Text>
                 <TextInput
                   value={formData.age}
                   onChangeText={(val) => setFormData({ ...formData, age: val })}
                   placeholder="25"
-                  placeholderTextColor={figmaTokens.colors.gray600}
+                  placeholderTextColor={figmaTokens.colors.gray400}
                   keyboardType="numeric"
-                  style={{
-                    backgroundColor: figmaTokens.colors.gray800,
-                    color: figmaTokens.colors.white,
-                    paddingHorizontal: 16,
-                    paddingVertical: 12,
-                    borderRadius: 12,
-                    fontSize: 16,
-                  }}
+                  style={styles.input}
                 />
               </View>
-
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: figmaTokens.colors.gray400, fontSize: 14, marginBottom: 6 }}>Blood Type</Text>
+              <View style={styles.halfInput}>
+                <Text style={styles.inputLabel}>Blood Type</Text>
                 <TextInput
                   value={formData.bloodType}
                   onChangeText={(val) => setFormData({ ...formData, bloodType: val })}
                   placeholder="A+"
-                  placeholderTextColor={figmaTokens.colors.gray600}
-                  style={{
-                    backgroundColor: figmaTokens.colors.gray800,
-                    color: figmaTokens.colors.white,
-                    paddingHorizontal: 16,
-                    paddingVertical: 12,
-                    borderRadius: 12,
-                    fontSize: 16,
-                  }}
+                  placeholderTextColor={figmaTokens.colors.gray400}
+                  style={styles.input}
                 />
               </View>
             </View>
 
-            <View style={{ flexDirection: "row", gap: 12, marginBottom: 24 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: figmaTokens.colors.gray400, fontSize: 14, marginBottom: 6 }}>Height (cm)</Text>
+            <View style={styles.rowInputs}>
+              <View style={styles.halfInput}>
+                <Text style={styles.inputLabel}>Height (cm)</Text>
                 <TextInput
                   value={formData.height}
                   onChangeText={(val) => setFormData({ ...formData, height: val })}
                   placeholder="170"
-                  placeholderTextColor={figmaTokens.colors.gray600}
+                  placeholderTextColor={figmaTokens.colors.gray400}
                   keyboardType="numeric"
-                  style={{
-                    backgroundColor: figmaTokens.colors.gray800,
-                    color: figmaTokens.colors.white,
-                    paddingHorizontal: 16,
-                    paddingVertical: 12,
-                    borderRadius: 12,
-                    fontSize: 16,
-                  }}
+                  style={styles.input}
                 />
               </View>
-
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: figmaTokens.colors.gray400, fontSize: 14, marginBottom: 6 }}>Weight (kg)</Text>
+              <View style={styles.halfInput}>
+                <Text style={styles.inputLabel}>Weight (kg)</Text>
                 <TextInput
                   value={formData.weight}
                   onChangeText={(val) => setFormData({ ...formData, weight: val })}
                   placeholder="70"
-                  placeholderTextColor={figmaTokens.colors.gray600}
+                  placeholderTextColor={figmaTokens.colors.gray400}
                   keyboardType="numeric"
-                  style={{
-                    backgroundColor: figmaTokens.colors.gray800,
-                    color: figmaTokens.colors.white,
-                    paddingHorizontal: 16,
-                    paddingVertical: 12,
-                    borderRadius: 12,
-                    fontSize: 16,
-                  }}
+                  style={styles.input}
                 />
               </View>
             </View>
 
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <Text style={{ color: figmaTokens.colors.white, fontSize: 18, fontWeight: "600" }}>
-                Emergency Contacts
-              </Text>
-              <TouchableOpacity onPress={addContact} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                <Plus size={20} color={figmaTokens.colors.red500} />
-                <Text style={{ color: figmaTokens.colors.red500, fontSize: 14, fontWeight: "600" }}>Add</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Emergency Contacts</Text>
+              <TouchableOpacity onPress={addContact} style={styles.addButton}>
+                <Plus size={18} color={figmaTokens.colors.blue500} />
+                <Text style={styles.addButtonText}>Add</Text>
               </TouchableOpacity>
             </View>
 
             {formData.contacts.map((contact, index) => (
-              <View key={index} style={{
-                backgroundColor: figmaTokens.colors.gray800,
-                padding: 16,
-                borderRadius: 12,
-                marginBottom: 12
-              }}>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <Text style={{ color: figmaTokens.colors.gray400, fontSize: 14, fontWeight: "600" }}>
-                    Contact {index + 1}
-                  </Text>
+              <View key={index} style={styles.contactCard}>
+                <View style={styles.contactHeader}>
+                  <Text style={styles.contactLabel}>Contact {index + 1}</Text>
                   {formData.contacts.length > 1 && (
                     <TouchableOpacity onPress={() => removeContact(index)}>
                       <Trash2 size={18} color={figmaTokens.colors.red500} />
                     </TouchableOpacity>
                   )}
                 </View>
-
                 <TextInput
                   value={contact.name}
                   onChangeText={(val) => updateContact(index, "name", val)}
                   placeholder="Contact name"
-                  placeholderTextColor={figmaTokens.colors.gray600}
-                  style={{
-                    backgroundColor: figmaTokens.colors.gray900,
-                    color: figmaTokens.colors.white,
-                    paddingHorizontal: 12,
-                    paddingVertical: 10,
-                    borderRadius: 8,
-                    fontSize: 14,
-                    marginBottom: 8,
-                  }}
+                  placeholderTextColor={figmaTokens.colors.gray400}
+                  style={styles.contactInput}
                 />
-
                 <TextInput
                   value={contact.relationship}
                   onChangeText={(val) => updateContact(index, "relationship", val)}
                   placeholder="Relationship (e.g., Father, Friend)"
-                  placeholderTextColor={figmaTokens.colors.gray600}
-                  style={{
-                    backgroundColor: figmaTokens.colors.gray900,
-                    color: figmaTokens.colors.white,
-                    paddingHorizontal: 12,
-                    paddingVertical: 10,
-                    borderRadius: 8,
-                    fontSize: 14,
-                    marginBottom: 8,
-                  }}
+                  placeholderTextColor={figmaTokens.colors.gray400}
+                  style={styles.contactInput}
                 />
-
                 <TextInput
                   value={contact.phone}
                   onChangeText={(val) => updateContact(index, "phone", val)}
                   placeholder="Phone number"
-                  placeholderTextColor={figmaTokens.colors.gray600}
+                  placeholderTextColor={figmaTokens.colors.gray400}
                   keyboardType="phone-pad"
-                  style={{
-                    backgroundColor: figmaTokens.colors.gray900,
-                    color: figmaTokens.colors.white,
-                    paddingHorizontal: 12,
-                    paddingVertical: 10,
-                    borderRadius: 8,
-                    fontSize: 14,
-                  }}
+                  style={[styles.contactInput, { marginBottom: 0 }]}
                 />
               </View>
             ))}
 
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 16, marginBottom: 12 }}>
-              <Text style={{ color: figmaTokens.colors.white, fontSize: 18, fontWeight: "600" }}>
-                Allergies
-              </Text>
-              <TouchableOpacity onPress={() => addArrayItem("allergies")} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                <Plus size={20} color={figmaTokens.colors.red500} />
-                <Text style={{ color: figmaTokens.colors.red500, fontSize: 14, fontWeight: "600" }}>Add</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Allergies</Text>
+              <TouchableOpacity onPress={() => addArrayItem("allergies")} style={styles.addButton}>
+                <Plus size={18} color={figmaTokens.colors.blue500} />
+                <Text style={styles.addButtonText}>Add</Text>
               </TouchableOpacity>
             </View>
 
             {formData.allergies.map((allergy, index) => (
-              <View key={index} style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <View key={index} style={styles.arrayItemRow}>
                 <TextInput
                   value={allergy}
                   onChangeText={(val) => updateArrayItem("allergies", index, val)}
                   placeholder="Enter allergy"
-                  placeholderTextColor={figmaTokens.colors.gray600}
-                  style={{
-                    flex: 1,
-                    backgroundColor: figmaTokens.colors.gray800,
-                    color: figmaTokens.colors.white,
-                    paddingHorizontal: 16,
-                    paddingVertical: 12,
-                    borderRadius: 12,
-                    fontSize: 16,
-                  }}
+                  placeholderTextColor={figmaTokens.colors.gray400}
+                  style={[styles.input, { flex: 1 }]}
                 />
                 {formData.allergies.length > 1 && (
-                  <TouchableOpacity onPress={() => removeArrayItem("allergies", index)}>
+                  <TouchableOpacity onPress={() => removeArrayItem("allergies", index)} style={{ marginLeft: 8 }}>
                     <Trash2 size={20} color={figmaTokens.colors.red500} />
                   </TouchableOpacity>
                 )}
               </View>
             ))}
 
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 16, marginBottom: 12 }}>
-              <Text style={{ color: figmaTokens.colors.white, fontSize: 18, fontWeight: "600" }}>
-                Medical Conditions
-              </Text>
-              <TouchableOpacity onPress={() => addArrayItem("medicalConditions")} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                <Plus size={20} color={figmaTokens.colors.red500} />
-                <Text style={{ color: figmaTokens.colors.red500, fontSize: 14, fontWeight: "600" }}>Add</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Medical Conditions</Text>
+              <TouchableOpacity onPress={() => addArrayItem("medicalConditions")} style={styles.addButton}>
+                <Plus size={18} color={figmaTokens.colors.blue500} />
+                <Text style={styles.addButtonText}>Add</Text>
               </TouchableOpacity>
             </View>
 
             {formData.medicalConditions.map((condition, index) => (
-              <View key={index} style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <View key={index} style={styles.arrayItemRow}>
                 <TextInput
                   value={condition}
                   onChangeText={(val) => updateArrayItem("medicalConditions", index, val)}
                   placeholder="Enter medical condition"
-                  placeholderTextColor={figmaTokens.colors.gray600}
-                  style={{
-                    flex: 1,
-                    backgroundColor: figmaTokens.colors.gray800,
-                    color: figmaTokens.colors.white,
-                    paddingHorizontal: 16,
-                    paddingVertical: 12,
-                    borderRadius: 12,
-                    fontSize: 16,
-                  }}
+                  placeholderTextColor={figmaTokens.colors.gray400}
+                  style={[styles.input, { flex: 1 }]}
                 />
                 {formData.medicalConditions.length > 1 && (
-                  <TouchableOpacity onPress={() => removeArrayItem("medicalConditions", index)}>
+                  <TouchableOpacity onPress={() => removeArrayItem("medicalConditions", index)} style={{ marginLeft: 8 }}>
                     <Trash2 size={20} color={figmaTokens.colors.red500} />
                   </TouchableOpacity>
                 )}
               </View>
             ))}
 
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 16, marginBottom: 12 }}>
-              <Text style={{ color: figmaTokens.colors.white, fontSize: 18, fontWeight: "600" }}>
-                Current Medications
-              </Text>
-              <TouchableOpacity onPress={() => addArrayItem("medications")} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                <Plus size={20} color={figmaTokens.colors.red500} />
-                <Text style={{ color: figmaTokens.colors.red500, fontSize: 14, fontWeight: "600" }}>Add</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Current Medications</Text>
+              <TouchableOpacity onPress={() => addArrayItem("medications")} style={styles.addButton}>
+                <Plus size={18} color={figmaTokens.colors.blue500} />
+                <Text style={styles.addButtonText}>Add</Text>
               </TouchableOpacity>
             </View>
 
             {formData.medications.map((medication, index) => (
-              <View key={index} style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <View key={index} style={styles.arrayItemRow}>
                 <TextInput
                   value={medication}
                   onChangeText={(val) => updateArrayItem("medications", index, val)}
                   placeholder="Enter medication"
-                  placeholderTextColor={figmaTokens.colors.gray600}
-                  style={{
-                    flex: 1,
-                    backgroundColor: figmaTokens.colors.gray800,
-                    color: figmaTokens.colors.white,
-                    paddingHorizontal: 16,
-                    paddingVertical: 12,
-                    borderRadius: 12,
-                    fontSize: 16,
-                  }}
+                  placeholderTextColor={figmaTokens.colors.gray400}
+                  style={[styles.input, { flex: 1 }]}
                 />
                 {formData.medications.length > 1 && (
-                  <TouchableOpacity onPress={() => removeArrayItem("medications", index)}>
+                  <TouchableOpacity onPress={() => removeArrayItem("medications", index)} style={{ marginLeft: 8 }}>
                     <Trash2 size={20} color={figmaTokens.colors.red500} />
                   </TouchableOpacity>
                 )}
@@ -550,26 +426,14 @@ export default function EmergencyCard({ navigation }) {
             <TouchableOpacity
               onPress={handleSave}
               disabled={saving}
-              style={{
-                backgroundColor: figmaTokens.colors.red500,
-                paddingVertical: 16,
-                borderRadius: 12,
-                marginTop: 24,
-                marginBottom: 40,
-                flexDirection: "row",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 8,
-              }}
+              style={styles.saveButton}
             >
               {saving ? (
                 <ActivityIndicator size="small" color={figmaTokens.colors.white} />
               ) : (
                 <>
                   <Save size={20} color={figmaTokens.colors.white} />
-                  <Text style={{ color: figmaTokens.colors.white, fontSize: 16, fontWeight: "700" }}>
-                    Save Emergency Card
-                  </Text>
+                  <Text style={styles.saveButtonText}>Save Emergency Card</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -579,212 +443,136 @@ export default function EmergencyCard({ navigation }) {
     </Modal>
   );
 
+  // No Data State
   if (!emergencyData) {
     return (
-      <View style={{ flex: 1, backgroundColor: figmaTokens.colors.gray900 }}>
-        <View style={{ paddingTop: 60, paddingHorizontal: 20 }}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <ArrowLeft size={24} color={figmaTokens.colors.white} />
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <ArrowLeft size={24} color={figmaTokens.colors.gray900} />
           </TouchableOpacity>
+          <Text style={styles.headerTitle}>Emergency Card</Text>
+          <View style={{ width: 36 }} />
         </View>
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 20 }}>
-          <AlertCircle size={48} color={figmaTokens.colors.gray500} />
-          <Text style={{ color: figmaTokens.colors.white, fontSize: 18, fontWeight: "600", marginTop: 16, textAlign: "center" }}>
-            No Emergency Card Found
-          </Text>
-          <Text style={{ color: figmaTokens.colors.gray400, fontSize: 14, marginTop: 8, textAlign: "center" }}>
+        <View style={styles.centerContent}>
+          <View style={styles.emptyIconContainer}>
+            <AlertCircle size={48} color={figmaTokens.colors.gray400} />
+          </View>
+          <Text style={styles.emptyTitle}>No Emergency Card Found</Text>
+          <Text style={styles.emptySubtitle}>
             Create your emergency card to help first responders
           </Text>
-          <TouchableOpacity
-            onPress={openEditModal}
-            style={{
-              backgroundColor: figmaTokens.colors.red500,
-              paddingVertical: 12,
-              paddingHorizontal: 24,
-              borderRadius: 12,
-              marginTop: 20,
-            }}
-          >
-            <Text style={{ color: figmaTokens.colors.white, fontSize: 16, fontWeight: "600" }}>
-              Create Emergency Card
-            </Text>
+          <TouchableOpacity onPress={openEditModal} style={styles.createButton}>
+            <Plus size={20} color={figmaTokens.colors.white} />
+            <Text style={styles.createButtonText}>Create Emergency Card</Text>
           </TouchableOpacity>
         </View>
         {renderEditModal()}
-      </View>
+      </SafeAreaView>
     );
   }
 
+  // Main View with Data
   return (
-    <View style={{ flex: 1, backgroundColor: figmaTokens.colors.gray900 }}>
-      <View style={{ paddingTop: 60, paddingBottom: 20, paddingHorizontal: 20 }}>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <ArrowLeft size={24} color={figmaTokens.colors.white} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={openEditModal} style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 6,
-            backgroundColor: figmaTokens.colors.red500,
-            paddingHorizontal: 16,
-            paddingVertical: 8,
-            borderRadius: 20,
-          }}>
-            <Edit size={18} color={figmaTokens.colors.white} />
-            <Text style={{ color: figmaTokens.colors.white, fontSize: 14, fontWeight: "600" }}>
-              Edit
-            </Text>
-          </TouchableOpacity>
-        </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <ArrowLeft size={24} color={figmaTokens.colors.gray900} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Emergency Card</Text>
+        <TouchableOpacity onPress={openEditModal} style={styles.editButton}>
+          <Edit size={18} color={figmaTokens.colors.white} />
+        </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
-        <View style={{
-          backgroundColor: figmaTokens.colors.red500,
-          borderRadius: 20,
-          padding: 20,
-          marginBottom: 20,
-        }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 }}>
-            <AlertCircle size={32} color={figmaTokens.colors.white} />
-            <Text style={{ color: figmaTokens.colors.white, fontSize: 24, fontWeight: "700" }}>
-              Emergency Card
-            </Text>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Emergency Banner */}
+        <View style={styles.emergencyBanner}>
+          <View style={styles.bannerRow}>
+            <AlertCircle size={28} color={figmaTokens.colors.white} />
+            <Text style={styles.bannerTitle}>Emergency Card</Text>
           </View>
-          <Text style={{ color: figmaTokens.colors.white, fontSize: 14, opacity: 0.9 }}>
+          <Text style={styles.bannerSubtitle}>
             In case of emergency, call any contact below
           </Text>
         </View>
 
-        <View style={{
-          backgroundColor: figmaTokens.colors.gray800,
-          borderRadius: 20,
-          padding: 20,
-          marginBottom: 16,
-        }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 }}>
-            <User size={24} color={figmaTokens.colors.red500} />
-            <Text style={{ color: figmaTokens.colors.white, fontSize: 18, fontWeight: "700" }}>
-              Personal Information
-            </Text>
+        {/* Personal Info Card */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <User size={22} color={figmaTokens.colors.blue500} />
+            <Text style={styles.cardTitle}>Personal Information</Text>
           </View>
-
-          <View style={{ gap: 12 }}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-              <Text style={{ color: figmaTokens.colors.gray400, fontSize: 14 }}>Name</Text>
-              <Text style={{ color: figmaTokens.colors.white, fontSize: 14, fontWeight: "600" }}>
-                {emergencyData.name}
-              </Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Name</Text>
+            <Text style={styles.infoValue}>{emergencyData.name}</Text>
+          </View>
+          {emergencyData.age && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Age</Text>
+              <Text style={styles.infoValue}>{emergencyData.age} years</Text>
             </View>
-            {emergencyData.age && (
-              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                <Text style={{ color: figmaTokens.colors.gray400, fontSize: 14 }}>Age</Text>
-                <Text style={{ color: figmaTokens.colors.white, fontSize: 14, fontWeight: "600" }}>
-                  {emergencyData.age} years
-                </Text>
-              </View>
-            )}
-            {emergencyData.bloodType && (
-              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                <Text style={{ color: figmaTokens.colors.gray400, fontSize: 14 }}>Blood Type</Text>
-                <Text style={{ color: figmaTokens.colors.white, fontSize: 14, fontWeight: "600" }}>
-                  {emergencyData.bloodType}
-                </Text>
-              </View>
-            )}
-            {emergencyData.height && (
-              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                <Text style={{ color: figmaTokens.colors.gray400, fontSize: 14 }}>Height</Text>
-                <Text style={{ color: figmaTokens.colors.white, fontSize: 14, fontWeight: "600" }}>
-                  {emergencyData.height} cm
-                </Text>
-              </View>
-            )}
-            {emergencyData.weight && (
-              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                <Text style={{ color: figmaTokens.colors.gray400, fontSize: 14 }}>Weight</Text>
-                <Text style={{ color: figmaTokens.colors.white, fontSize: 14, fontWeight: "600" }}>
-                  {emergencyData.weight} kg
-                </Text>
-              </View>
-            )}
-          </View>
+          )}
+          {emergencyData.bloodType && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Blood Type</Text>
+              <Text style={[styles.infoValue, styles.bloodType]}>{emergencyData.bloodType}</Text>
+            </View>
+          )}
+          {emergencyData.height && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Height</Text>
+              <Text style={styles.infoValue}>{emergencyData.height} cm</Text>
+            </View>
+          )}
+          {emergencyData.weight && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Weight</Text>
+              <Text style={styles.infoValue}>{emergencyData.weight} kg</Text>
+            </View>
+          )}
         </View>
 
+        {/* Emergency Contacts Card */}
         {emergencyData.emergencyContacts && emergencyData.emergencyContacts.length > 0 && (
-          <View style={{
-            backgroundColor: figmaTokens.colors.gray800,
-            borderRadius: 20,
-            padding: 20,
-            marginBottom: 16,
-          }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 }}>
-              <Phone size={24} color={figmaTokens.colors.red500} />
-              <Text style={{ color: figmaTokens.colors.white, fontSize: 18, fontWeight: "700" }}>
-                Emergency Contacts
-              </Text>
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Phone size={22} color={figmaTokens.colors.green500} />
+              <Text style={styles.cardTitle}>Emergency Contacts</Text>
             </View>
-
             {emergencyData.emergencyContacts.map((contact, idx) => (
               <TouchableOpacity
                 key={idx}
                 onPress={() => Linking.openURL(`tel:${contact.phone}`)}
-                style={{
-                  backgroundColor: figmaTokens.colors.gray900,
-                  borderRadius: 12,
-                  padding: 16,
-                  marginBottom: 12,
-                }}
+                style={styles.contactItem}
               >
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: figmaTokens.colors.white, fontSize: 16, fontWeight: "600", marginBottom: 4 }}>
-                      {contact.name}
-                    </Text>
-                    <Text style={{ color: figmaTokens.colors.gray400, fontSize: 14, marginBottom: 4 }}>
-                      {contact.relationship}
-                    </Text>
-                    <Text style={{ color: figmaTokens.colors.red500, fontSize: 14, fontWeight: "600" }}>
-                      {contact.phone}
-                    </Text>
-                  </View>
-                  <Phone size={20} color={figmaTokens.colors.red500} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.contactName}>{contact.name}</Text>
+                  <Text style={styles.contactRelation}>{contact.relationship}</Text>
+                  <Text style={styles.contactPhone}>{contact.phone}</Text>
+                </View>
+                <View style={styles.callButton}>
+                  <Phone size={18} color={figmaTokens.colors.white} />
                 </View>
               </TouchableOpacity>
             ))}
           </View>
         )}
 
-        <View style={{
-          backgroundColor: figmaTokens.colors.gray800,
-          borderRadius: 20,
-          padding: 20,
-          marginBottom: 16,
-        }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 }}>
-            <Heart size={24} color={figmaTokens.colors.red500} />
-            <Text style={{ color: figmaTokens.colors.white, fontSize: 18, fontWeight: "700" }}>
-              Medical Information
-            </Text>
+        {/* Medical Info Card */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Heart size={22} color={figmaTokens.colors.red500} />
+            <Text style={styles.cardTitle}>Medical Information</Text>
           </View>
 
           {emergencyData.allergies && emergencyData.allergies.length > 0 && (
-            <View style={{ marginBottom: 16 }}>
-              <Text style={{ color: figmaTokens.colors.gray400, fontSize: 14, marginBottom: 8 }}>
-                Allergies
-              </Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            <View style={styles.medicalSection}>
+              <Text style={styles.medicalLabel}>Allergies</Text>
+              <View style={styles.tagContainer}>
                 {emergencyData.allergies.map((allergy, idx) => (
-                  <View key={idx} style={{
-                    backgroundColor: figmaTokens.colors.red500 + "20",
-                    paddingHorizontal: 12,
-                    paddingVertical: 6,
-                    borderRadius: 20,
-                  }}>
-                    <Text style={{ color: figmaTokens.colors.red500, fontSize: 13, fontWeight: "600" }}>
-                      {allergy}
-                    </Text>
+                  <View key={idx} style={[styles.tag, styles.allergyTag]}>
+                    <Text style={styles.allergyTagText}>{allergy}</Text>
                   </View>
                 ))}
               </View>
@@ -792,21 +580,12 @@ export default function EmergencyCard({ navigation }) {
           )}
 
           {emergencyData.medicalConditions && emergencyData.medicalConditions.length > 0 && (
-            <View style={{ marginBottom: 16 }}>
-              <Text style={{ color: figmaTokens.colors.gray400, fontSize: 14, marginBottom: 8 }}>
-                Medical Conditions
-              </Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            <View style={styles.medicalSection}>
+              <Text style={styles.medicalLabel}>Medical Conditions</Text>
+              <View style={styles.tagContainer}>
                 {emergencyData.medicalConditions.map((condition, idx) => (
-                  <View key={idx} style={{
-                    backgroundColor: figmaTokens.colors.orange500 + "20",
-                    paddingHorizontal: 12,
-                    paddingVertical: 6,
-                    borderRadius: 20,
-                  }}>
-                    <Text style={{ color: figmaTokens.colors.orange500, fontSize: 13, fontWeight: "600" }}>
-                      {condition}
-                    </Text>
+                  <View key={idx} style={[styles.tag, styles.conditionTag]}>
+                    <Text style={styles.conditionTagText}>{condition}</Text>
                   </View>
                 ))}
               </View>
@@ -814,26 +593,378 @@ export default function EmergencyCard({ navigation }) {
           )}
 
           {emergencyData.currentMedications && emergencyData.currentMedications.length > 0 && (
-            <View>
-              <Text style={{ color: figmaTokens.colors.gray400, fontSize: 14, marginBottom: 8 }}>
-                Current Medications
-              </Text>
-              <View style={{ gap: 8 }}>
-                {emergencyData.currentMedications.map((med, idx) => (
-                  <View key={idx} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                    <Pill size={16} color={figmaTokens.colors.blue500} />
-                    <Text style={{ color: figmaTokens.colors.white, fontSize: 14 }}>
-                      {med}
-                    </Text>
-                  </View>
-                ))}
-              </View>
+            <View style={styles.medicalSection}>
+              <Text style={styles.medicalLabel}>Current Medications</Text>
+              {emergencyData.currentMedications.map((med, idx) => (
+                <View key={idx} style={styles.medicationItem}>
+                  <Pill size={16} color={figmaTokens.colors.purple500} />
+                  <Text style={styles.medicationText}>{med}</Text>
+                </View>
+              ))}
             </View>
           )}
         </View>
       </ScrollView>
 
       {renderEditModal()}
-    </View>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: figmaTokens.colors.gray50,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: figmaTokens.colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: figmaTokens.colors.gray200,
+  },
+  backButton: {
+    padding: 6,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: figmaTokens.colors.gray900,
+  },
+  editButton: {
+    backgroundColor: figmaTokens.colors.blue500,
+    padding: 8,
+    borderRadius: 20,
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: figmaTokens.colors.gray500,
+  },
+  errorTitle: {
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: "600",
+    color: figmaTokens.colors.gray900,
+    textAlign: "center",
+  },
+  retryButton: {
+    marginTop: 20,
+    backgroundColor: figmaTokens.colors.blue500,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    color: figmaTokens.colors.white,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  emptyIconContainer: {
+    backgroundColor: figmaTokens.colors.gray100,
+    padding: 20,
+    borderRadius: 50,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: figmaTokens.colors.gray900,
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: figmaTokens.colors.gray500,
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  createButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: figmaTokens.colors.blue500,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+  },
+  createButtonText: {
+    color: figmaTokens.colors.white,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+  emergencyBanner: {
+    backgroundColor: figmaTokens.colors.red500,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+  },
+  bannerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 8,
+  },
+  bannerTitle: {
+    color: figmaTokens.colors.white,
+    fontSize: 22,
+    fontWeight: "700",
+  },
+  bannerSubtitle: {
+    color: figmaTokens.colors.white,
+    fontSize: 14,
+    opacity: 0.9,
+  },
+  card: {
+    backgroundColor: figmaTokens.colors.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    ...figmaTokens.shadows.sm,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: figmaTokens.colors.gray100,
+  },
+  cardTitle: {
+    fontSize: 17,
+    fontWeight: "600",
+    color: figmaTokens.colors.gray900,
+  },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: figmaTokens.colors.gray500,
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: figmaTokens.colors.gray900,
+  },
+  bloodType: {
+    color: figmaTokens.colors.red500,
+    fontWeight: "700",
+  },
+  contactItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: figmaTokens.colors.gray50,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+  },
+  contactName: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: figmaTokens.colors.gray900,
+    marginBottom: 2,
+  },
+  contactRelation: {
+    fontSize: 13,
+    color: figmaTokens.colors.gray500,
+    marginBottom: 4,
+  },
+  contactPhone: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: figmaTokens.colors.blue500,
+  },
+  callButton: {
+    backgroundColor: figmaTokens.colors.green500,
+    padding: 10,
+    borderRadius: 20,
+  },
+  medicalSection: {
+    marginBottom: 16,
+  },
+  medicalLabel: {
+    fontSize: 14,
+    color: figmaTokens.colors.gray500,
+    marginBottom: 10,
+  },
+  tagContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  tag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  allergyTag: {
+    backgroundColor: figmaTokens.colors.red50,
+  },
+  allergyTagText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: figmaTokens.colors.red600,
+  },
+  conditionTag: {
+    backgroundColor: figmaTokens.colors.orange50,
+  },
+  conditionTagText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: figmaTokens.colors.orange600,
+  },
+  medicationItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 6,
+  },
+  medicationText: {
+    fontSize: 14,
+    color: figmaTokens.colors.gray900,
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: figmaTokens.colors.white,
+    marginTop: 50,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: figmaTokens.colors.gray200,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: figmaTokens.colors.gray900,
+  },
+  modalContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: figmaTokens.colors.gray900,
+    marginBottom: 12,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 20,
+    marginBottom: 12,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: figmaTokens.colors.gray600,
+    marginBottom: 6,
+  },
+  input: {
+    backgroundColor: figmaTokens.colors.gray50,
+    borderWidth: 1,
+    borderColor: figmaTokens.colors.gray200,
+    color: figmaTokens.colors.gray900,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 10,
+    fontSize: 15,
+  },
+  rowInputs: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 16,
+  },
+  halfInput: {
+    flex: 1,
+  },
+  addButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  addButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: figmaTokens.colors.blue500,
+  },
+  contactCard: {
+    backgroundColor: figmaTokens.colors.gray50,
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  contactHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  contactLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: figmaTokens.colors.gray600,
+  },
+  contactInput: {
+    backgroundColor: figmaTokens.colors.white,
+    borderWidth: 1,
+    borderColor: figmaTokens.colors.gray200,
+    color: figmaTokens.colors.gray900,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  arrayItemRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  saveButton: {
+    backgroundColor: figmaTokens.colors.blue500,
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginTop: 24,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  },
+  saveButtonText: {
+    color: figmaTokens.colors.white,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+});

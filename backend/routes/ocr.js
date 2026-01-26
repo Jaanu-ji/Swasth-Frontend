@@ -255,12 +255,23 @@ router.get('/status/:scanId', async (req, res) => {
 
 router.get('/history/:email', async (req, res) => {
   try {
-    const scans = await OCRScan.find({ userEmail: req.params.email })
+    const { memberId } = req.query;
+    const query = { userEmail: req.params.email };
+
+    // Filter by memberId if provided, otherwise get self (null)
+    if (memberId) {
+      query.memberId = memberId;
+    } else {
+      query.memberId = null;
+    }
+
+    const scans = await OCRScan.find(query)
       .sort({ createdAt: -1 })
       .limit(20);
 
     res.json(scans);
   } catch (error) {
+    console.error('[OCR] Error fetching history:', error);
     res.status(500).json({ message: 'Failed to fetch OCR history' });
   }
 });

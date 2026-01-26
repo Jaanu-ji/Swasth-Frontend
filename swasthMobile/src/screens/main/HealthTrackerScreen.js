@@ -25,16 +25,19 @@ export default function HealthTrackerScreen({ navigation }) {
 
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   /* -------------------------------------------------------------------------- */
   /*                                   DATA                                     */
   /* -------------------------------------------------------------------------- */
 
-  const loadLogs = useCallback(async () => {
+  const loadLogs = useCallback(async (showLoader = false) => {
     if (!user?.email) return;
 
     try {
-      setLoading(true);
+      // Only show loading spinner on initial load
+      if (showLoader) setLoading(true);
+
       const res = await getHealthLogs(user.email, activeMember.memberId);
 
       // Backend already sorts by createdAt DESC, but ensure it's an array
@@ -43,6 +46,7 @@ export default function HealthTrackerScreen({ navigation }) {
         : [];
 
       setLogs(sorted);
+      setInitialLoadDone(true);
     } catch (e) {
       console.error('Error loading health logs:', e);
       setLogs([]);
@@ -51,16 +55,20 @@ export default function HealthTrackerScreen({ navigation }) {
     }
   }, [user?.email, activeMember.memberId]);
 
-  // Reload on user.email change
+  // Initial load with spinner
   useEffect(() => {
-    loadLogs();
-  }, [loadLogs]);
+    if (!initialLoadDone) {
+      loadLogs(true);
+    }
+  }, [loadLogs, initialLoadDone]);
 
-  // Reload on screen focus
+  // Reload on screen focus - silent refresh (no loading spinner)
   useFocusEffect(
     useCallback(() => {
-      loadLogs();
-    }, [loadLogs])
+      if (initialLoadDone) {
+        loadLogs(false);
+      }
+    }, [loadLogs, initialLoadDone])
   );
 
 

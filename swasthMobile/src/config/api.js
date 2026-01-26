@@ -7,7 +7,7 @@ import axios from "axios";
  * - Laptop ka IPv4 address use karo
  * - Example: http://192.168.1.5:3000
  */
-const API_BASE_URL = "http:// 192.168.29.192:3000/api"; // ⬅️ apna IP
+const API_BASE_URL = "https://swasth-bk.onrender.com/api"; // ⬅️ apna IP
 const API_URL = API_BASE_URL;
 
 const api = axios.create({
@@ -163,8 +163,9 @@ export const getOCRStatus = async (scanId) => {
   return res.data;
 };
 
-export const getOCRHistory = async (email) => {
-  const res = await api.get(`/ocr/history/${email}`);
+export const getOCRHistory = async (email, memberId = null) => {
+  const params = memberId ? `?memberId=${memberId}` : '';
+  const res = await api.get(`/ocr/history/${email}${params}`);
   return res.data;
 };
 
@@ -389,6 +390,80 @@ export const deleteReminder = async (id) => {
 export const markReminderTriggered = async (id) => {
   const res = await api.post(`/reminders/${id}/trigger`);
   return res.data;
+};
+
+/* ---------------- HEALTH DOCUMENTS ---------------- */
+export const getHealthDocuments = async (email, memberId = null) => {
+  const params = memberId ? `?memberId=${memberId}` : '';
+  const res = await api.get(`/health-documents/${email}${params}`);
+  return res.data;
+};
+
+export const uploadHealthDocument = async (email, images, title, description, documentDate, category, memberId = null, memberName = 'Self') => {
+  const formData = new FormData();
+
+  formData.append("email", email);
+  formData.append("title", title);
+  formData.append("description", description || '');
+  formData.append("documentDate", documentDate);
+  formData.append("category", category || 'Other');
+  formData.append("memberId", memberId || '');
+  formData.append("memberName", memberName || 'Self');
+
+  images.forEach((image, index) => {
+    formData.append("images", {
+      uri: image.uri,
+      name: `health_doc_${Date.now()}_${index}.jpg`,
+      type: image.type || "image/jpeg",
+    });
+  });
+
+  const res = await fetch(`${API_URL}/health-documents/upload`, {
+    method: "POST",
+    body: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text);
+  }
+
+  return res.json();
+};
+
+export const deleteHealthDocument = async (id) => {
+  const res = await api.delete(`/health-documents/${id}`);
+  return res.data;
+};
+
+export const addImagesToDocument = async (id, images) => {
+  const formData = new FormData();
+
+  images.forEach((image, index) => {
+    formData.append("images", {
+      uri: image.uri,
+      name: `health_doc_${Date.now()}_${index}.jpg`,
+      type: image.type || "image/jpeg",
+    });
+  });
+
+  const res = await fetch(`${API_URL}/health-documents/${id}/images`, {
+    method: "POST",
+    body: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text);
+  }
+
+  return res.json();
 };
 
 /* ---------------- MEDICAL HISTORY ---------------- */
