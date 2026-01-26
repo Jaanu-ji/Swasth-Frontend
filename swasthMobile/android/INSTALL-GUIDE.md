@@ -38,7 +38,33 @@ sudo yum install android-tools       # Fedora/CentOS
 
 ## Installation Methods
 
-### Method 1: Using Installation Scripts (Recommended)
+### Method 1: Build and Install (Recommended - One Command)
+
+This method builds the release APK and installs it automatically.
+
+#### On macOS/Linux:
+```bash
+# Make script executable (first time only)
+chmod +x build-and-install.sh
+
+# Build and install
+./build-and-install.sh
+```
+
+#### On Windows:
+```cmd
+# Double-click the file or run in Command Prompt
+build-and-install.bat
+```
+
+Or if you have Git Bash/WSL:
+```bash
+bash build-and-install.sh
+```
+
+### Method 2: Install Only (APK Already Built)
+
+If you already have a built APK and just want to install it:
 
 #### On macOS/Linux:
 ```bash
@@ -51,7 +77,7 @@ chmod +x install-release.sh
 
 #### On Windows:
 ```cmd
-# Run the batch file
+# Double-click the file or run in Command Prompt
 install-release.bat
 ```
 
@@ -60,7 +86,7 @@ Or if you have Git Bash/WSL:
 bash install-release.sh
 ```
 
-### Method 2: Manual Installation
+### Method 3: Manual Installation
 
 #### Build and Install:
 ```bash
