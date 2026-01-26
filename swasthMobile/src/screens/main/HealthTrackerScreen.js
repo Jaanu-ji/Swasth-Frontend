@@ -104,7 +104,7 @@ export default function HealthTrackerScreen({ navigation }) {
         label: "Blood Pressure",
         value: map.bloodPressure?.value ?? "--/--",
         unit: "mmHg",
-        icon: "activity",
+        icon: "heart",
         color: figmaTokens.colors.red500,
       },
       {
