@@ -1,11 +1,12 @@
 // ✅ Safe App with Error Boundary + React Native Paper Provider
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 
 import { AuthProvider } from './src/hooks/useAuth';
 import { MemberProvider } from './src/hooks/useMember';
 import AppNavigator from './src/navigation/AppNavigator';
+import NotificationService from './src/services/NotificationService';
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -42,6 +43,11 @@ class ErrorBoundary extends React.Component {
 }
 
 export default function SafeApp() {
+  useEffect(() => {
+    // Initialize notification service on app start
+    NotificationService.initialize();
+  }, []);
+
   return (
     <PaperProvider>
       <ErrorBoundary>

@@ -27,6 +27,7 @@ import {
   toggleReminder,
 } from "../../config/api";
 import figmaTokens from "../../design-system/figmaTokens";
+import NotificationService from "../../services/NotificationService";
 
 export default function RemindersScreen({ navigation }) {
   const { user } = useAuth();
@@ -105,6 +106,8 @@ export default function RemindersScreen({ navigation }) {
         onPress: async () => {
           try {
             await deleteReminder(reminderId);
+            // Also cancel the scheduled notification
+            await NotificationService.cancelReminder(reminderId);
             loadReminders();
           } catch (err) {
             Alert.alert("Error", err.message || "Failed to delete");
@@ -167,10 +170,24 @@ export default function RemindersScreen({ navigation }) {
         payload.date = formData.date.toISOString();
       }
 
-      await addReminder(payload);
+      const result = await addReminder(payload);
+
+      // Schedule notification for this reminder
+      if (result && result._id) {
+        await NotificationService.scheduleReminder({
+          _id: result._id,
+          title: formData.title.trim(),
+          description: formData.description.trim(),
+          time: formData.time,
+          type: formData.type,
+          frequency: formData.frequency,
+          date: formData.type === "Appointment" ? formData.date.toISOString() : null,
+        });
+      }
+
       setShowAddModal(false);
       loadReminders();
-      Alert.alert("Success", "Reminder added successfully!");
+      Alert.alert("Success", "Reminder added with notification!");
     } catch (err) {
       Alert.alert("Error", err.message || "Failed to add reminder");
     } finally {

@@ -10,6 +10,8 @@ const userSchema = new mongoose.Schema({
   height: { type: Number },
   weight: { type: Number },
   goal: { type: String, enum: ['Lose', 'Maintain', 'Gain'], default: 'Maintain' },
+  resetOTP: { type: String },
+  resetOTPExpiry: { type: Date },
 }, { timestamps: true });
 
 export default mongoose.model('User', userSchema);

@@ -69,6 +69,22 @@ export const registerUser = async (data) => {
   return res.data;
 };
 
+/* ---------------- FORGOT PASSWORD ---------------- */
+export const sendPasswordResetOTP = async (email) => {
+  const res = await api.post("/auth/forgot-password", { email });
+  return res.data;
+};
+
+export const verifyPasswordResetOTP = async (email, otp) => {
+  const res = await api.post("/auth/verify-otp", { email, otp });
+  return res.data;
+};
+
+export const resetPassword = async (email, otp, newPassword) => {
+  const res = await api.post("/auth/reset-password", { email, otp, newPassword });
+  return res.data;
+};
+
 /* ---------------- CHAT ---------------- */
 export const chat = async (email, message) => {
   const res = await api.post("/chat", { email, message });

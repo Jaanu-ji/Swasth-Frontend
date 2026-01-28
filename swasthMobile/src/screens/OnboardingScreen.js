@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import figmaTokens from '../design-system/figmaTokens';
 
 const onboardingScreens = [
@@ -35,15 +36,17 @@ const onboardingScreens = [
 export default function OnboardingScreen({ navigation }) {
   const [currentScreen, setCurrentScreen] = useState(0);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentScreen < onboardingScreens.length - 1) {
       setCurrentScreen(currentScreen + 1);
     } else {
+      await AsyncStorage.setItem('swasth_onboarding_seen', 'true');
       navigation.replace('Login');
     }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    await AsyncStorage.setItem('swasth_onboarding_seen', 'true');
     navigation.replace('Login');
   };
 

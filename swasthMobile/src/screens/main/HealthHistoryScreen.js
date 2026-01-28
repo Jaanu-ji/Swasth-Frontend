@@ -13,6 +13,8 @@ import {
   RefreshControl,
   StyleSheet,
   Platform,
+  PermissionsAndroid,
+  Linking,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
@@ -114,16 +116,66 @@ export default function HealthHistoryScreen({ navigation }) {
     );
   };
 
-  const handleTakePhoto = () => {
+  const requestCameraPermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+          {
+            title: 'Camera Permission',
+            message: 'Swasth needs access to your camera to take photos of documents',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          }
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    }
+    return true; // iOS handles permissions automatically
+  };
+
+  const handleTakePhoto = async () => {
+    const hasPermission = await requestCameraPermission();
+
+    if (!hasPermission) {
+      Alert.alert(
+        'Camera Permission Required',
+        'Please enable camera permission in settings to take photos.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+        ]
+      );
+      return;
+    }
+
     launchCamera(
       {
         mediaType: 'photo',
         quality: 0.8,
+        saveToPhotos: false,
       },
       (response) => {
         if (response.didCancel) return;
         if (response.errorCode) {
-          Alert.alert('Error', 'Failed to take photo');
+          if (response.errorCode === 'camera_unavailable') {
+            Alert.alert('Error', 'Camera is not available on this device');
+          } else if (response.errorCode === 'permission') {
+            Alert.alert(
+              'Permission Denied',
+              'Camera permission is required to take photos.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Open Settings', onPress: () => Linking.openSettings() },
+              ]
+            );
+          } else {
+            Alert.alert('Error', 'Failed to take photo');
+          }
           return;
         }
         if (response.assets && response.assets[0]) {

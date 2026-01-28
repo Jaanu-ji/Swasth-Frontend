@@ -1,13 +1,15 @@
 // ✅ App Navigator - React Navigation Stack
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../hooks/useAuth';
 
 // Import screens
 import OnboardingScreen from '../screens/OnboardingScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import DashboardScreen from '../screens/main/DashboardScreen';
 import HealthTrackerScreen from '../screens/main/HealthTrackerScreen';
 import AddVitalsScreen from '../screens/main/AddVitalsScreen';
@@ -38,8 +40,21 @@ const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   const { user, loading } = useAuth();
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(null);
 
-  if (loading) {
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        const seen = await AsyncStorage.getItem('swasth_onboarding_seen');
+        setHasSeenOnboarding(seen === 'true');
+      } catch (e) {
+        setHasSeenOnboarding(false);
+      }
+    };
+    checkOnboarding();
+  }, []);
+
+  if (loading || hasSeenOnboarding === null) {
     return null; // Or a loading screen
   }
 
@@ -52,12 +67,22 @@ export default function AppNavigator() {
         }}
       >
         {!user ? (
-          // Auth Stack
-          <>
-            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegisterScreen} />
-          </>
+          // Auth Stack - Show Login directly if onboarding was already seen
+          hasSeenOnboarding ? (
+            <>
+              <Stack.Screen name="Login" component={LoginScreen} />
+              <Stack.Screen name="Register" component={RegisterScreen} />
+              <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+              <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+            </>
+          ) : (
+            <>
+              <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+              <Stack.Screen name="Login" component={LoginScreen} />
+              <Stack.Screen name="Register" component={RegisterScreen} />
+              <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+            </>
+          )
         ) : (
           // Main Stack
           <>

@@ -122,6 +122,7 @@ export default function RegisterScreen({ navigation }) {
                 <TextInput
                   style={styles.input}
                   placeholder="Enter your name"
+                  placeholderTextColor={figmaTokens.colors.gray400}
                   value={form.name}
                   onChangeText={(v) =>
                     setForm({ ...form, name: v })
@@ -140,6 +141,7 @@ export default function RegisterScreen({ navigation }) {
                 <TextInput
                   style={styles.input}
                   placeholder="Enter your email"
+                  placeholderTextColor={figmaTokens.colors.gray400}
                   autoCapitalize="none"
                   keyboardType="email-address"
                   value={form.email}
@@ -160,6 +162,7 @@ export default function RegisterScreen({ navigation }) {
                 <TextInput
                   style={styles.input}
                   placeholder="Enter password"
+                  placeholderTextColor={figmaTokens.colors.gray400}
                   secureTextEntry={!showPassword}
                   value={form.password}
                   onChangeText={(v) =>
@@ -187,6 +190,7 @@ export default function RegisterScreen({ navigation }) {
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. 170"
+                  placeholderTextColor={figmaTokens.colors.gray400}
                   keyboardType="numeric"
                   value={form.height}
                   onChangeText={(v) =>
@@ -206,6 +210,7 @@ export default function RegisterScreen({ navigation }) {
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. 65"
+                  placeholderTextColor={figmaTokens.colors.gray400}
                   keyboardType="numeric"
                   value={form.weight}
                   onChangeText={(v) =>
@@ -320,6 +325,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: figmaTokens.spacing["3"],
     marginLeft: 8,
+    color: figmaTokens.colors.gray900,
   },
 
   submitButton: {

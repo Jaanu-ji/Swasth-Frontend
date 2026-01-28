@@ -65,11 +65,10 @@ export default function ProfileScreen({ navigation }) {
   const handleLogout = async () => {
     try {
       await logout();
-      // Redirect to onboarding after logout
-      navigation.replace('Onboarding');
+      // Navigation is handled automatically by AppNavigator when user becomes null
     } catch (err) {
-      // Even if logout fails, redirect to onboarding
-      navigation.replace('Onboarding');
+      // Even if logout fails, try again
+      await logout();
     }
   };
 
