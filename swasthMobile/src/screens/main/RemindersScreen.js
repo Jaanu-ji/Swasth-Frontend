@@ -46,6 +46,11 @@ export default function RemindersScreen({ navigation }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [timePickerDate, setTimePickerDate] = useState(new Date());
 
+  // Custom time picker state for Android
+  const [showCustomTimePicker, setShowCustomTimePicker] = useState(false);
+  const [tempHour, setTempHour] = useState("09");
+  const [tempMinute, setTempMinute] = useState("00");
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -300,14 +305,20 @@ export default function RemindersScreen({ navigation }) {
               <TouchableOpacity
                 style={styles.pickerButton}
                 onPress={() => {
-                  // Set the date object for time picker
                   const [hours, minutes] = (formData.time || "09:00").split(":");
-                  const date = new Date();
-                  date.setHours(parseInt(hours, 10) || 9);
-                  date.setMinutes(parseInt(minutes, 10) || 0);
-                  date.setSeconds(0);
-                  setTimePickerDate(date);
-                  setShowTimePicker(true);
+                  if (Platform.OS === "android") {
+                    // Use custom time picker on Android to avoid crash
+                    setTempHour(hours || "09");
+                    setTempMinute(minutes || "00");
+                    setShowCustomTimePicker(true);
+                  } else {
+                    const date = new Date();
+                    date.setHours(parseInt(hours, 10) || 9);
+                    date.setMinutes(parseInt(minutes, 10) || 0);
+                    date.setSeconds(0);
+                    setTimePickerDate(date);
+                    setShowTimePicker(true);
+                  }
                 }}
               >
                 <Icon name="clock-outline" size={20} color={figmaTokens.colors.gray600} />
@@ -659,6 +670,98 @@ export default function RemindersScreen({ navigation }) {
           minimumDate={new Date()}
         />
       )}
+
+      {/* Custom Time Picker Modal for Android */}
+      <Modal
+        visible={showCustomTimePicker}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCustomTimePicker(false)}
+      >
+        <TouchableOpacity
+          style={styles.customTimeOverlay}
+          activeOpacity={1}
+          onPress={() => setShowCustomTimePicker(false)}
+        >
+          <View style={styles.customTimeContainer}>
+            <Text style={styles.customTimeTitle}>Select Time</Text>
+
+            <View style={styles.customTimeRow}>
+              {/* Hours */}
+              <View style={styles.customTimeColumn}>
+                <Text style={styles.customTimeLabel}>Hour</Text>
+                <ScrollView style={styles.customTimeScroll} showsVerticalScrollIndicator={false}>
+                  {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0")).map((hour) => (
+                    <TouchableOpacity
+                      key={hour}
+                      style={[
+                        styles.customTimeItem,
+                        tempHour === hour && styles.customTimeItemActive,
+                      ]}
+                      onPress={() => setTempHour(hour)}
+                    >
+                      <Text
+                        style={[
+                          styles.customTimeItemText,
+                          tempHour === hour && styles.customTimeItemTextActive,
+                        ]}
+                      >
+                        {hour}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              <Text style={styles.customTimeSeparator}>:</Text>
+
+              {/* Minutes */}
+              <View style={styles.customTimeColumn}>
+                <Text style={styles.customTimeLabel}>Minute</Text>
+                <ScrollView style={styles.customTimeScroll} showsVerticalScrollIndicator={false}>
+                  {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0")).map((minute) => (
+                    <TouchableOpacity
+                      key={minute}
+                      style={[
+                        styles.customTimeItem,
+                        tempMinute === minute && styles.customTimeItemActive,
+                      ]}
+                      onPress={() => setTempMinute(minute)}
+                    >
+                      <Text
+                        style={[
+                          styles.customTimeItemText,
+                          tempMinute === minute && styles.customTimeItemTextActive,
+                        ]}
+                      >
+                        {minute}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </View>
+
+            <View style={styles.customTimeButtons}>
+              <TouchableOpacity
+                style={styles.customTimeCancelBtn}
+                onPress={() => setShowCustomTimePicker(false)}
+              >
+                <Text style={styles.customTimeCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.customTimeConfirmBtn}
+                onPress={() => {
+                  setFormData({ ...formData, time: `${tempHour}:${tempMinute}` });
+                  setShowCustomTimePicker(false);
+                }}
+              >
+                <Text style={styles.customTimeConfirmText}>Confirm</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -976,6 +1079,98 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   saveButtonText: {
+    color: figmaTokens.colors.white,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  // Custom Time Picker Styles
+  customTimeOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  customTimeContainer: {
+    backgroundColor: figmaTokens.colors.white,
+    borderRadius: 20,
+    padding: 20,
+    width: "80%",
+    maxHeight: 400,
+  },
+  customTimeTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: figmaTokens.colors.gray900,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  customTimeRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  customTimeColumn: {
+    alignItems: "center",
+  },
+  customTimeLabel: {
+    fontSize: 14,
+    color: figmaTokens.colors.gray500,
+    marginBottom: 8,
+  },
+  customTimeScroll: {
+    height: 200,
+    width: 80,
+  },
+  customTimeItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginVertical: 2,
+  },
+  customTimeItemActive: {
+    backgroundColor: figmaTokens.colors.blue500,
+  },
+  customTimeItemText: {
+    fontSize: 18,
+    color: figmaTokens.colors.gray700,
+    textAlign: "center",
+  },
+  customTimeItemTextActive: {
+    color: figmaTokens.colors.white,
+    fontWeight: "600",
+  },
+  customTimeSeparator: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: figmaTokens.colors.gray900,
+    marginHorizontal: 10,
+  },
+  customTimeButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  customTimeCancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: figmaTokens.colors.gray100,
+    alignItems: "center",
+  },
+  customTimeCancelText: {
+    color: figmaTokens.colors.gray700,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  customTimeConfirmBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: figmaTokens.colors.blue500,
+    alignItems: "center",
+  },
+  customTimeConfirmText: {
     color: figmaTokens.colors.white,
     fontSize: 16,
     fontWeight: "600",
