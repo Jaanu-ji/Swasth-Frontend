@@ -11,6 +11,7 @@ import {
   Alert,
   SafeAreaView,
   StyleSheet,
+  Platform,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import LinearGradient from "react-native-linear-gradient";
@@ -43,6 +44,7 @@ export default function RemindersScreen({ navigation }) {
   const [saving, setSaving] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [timePickerDate, setTimePickerDate] = useState(new Date());
 
   const [formData, setFormData] = useState({
     title: "",
@@ -197,7 +199,16 @@ export default function RemindersScreen({ navigation }) {
 
   // Time picker handler
   const onTimeChange = (event, selectedDate) => {
-    setShowTimePicker(false);
+    // On Android, picker closes automatically. On iOS, keep it open until user dismisses.
+    if (Platform.OS === "android") {
+      setShowTimePicker(false);
+    }
+
+    if (event.type === "dismissed") {
+      setShowTimePicker(false);
+      return;
+    }
+
     if (selectedDate) {
       const hours = String(selectedDate.getHours()).padStart(2, "0");
       const minutes = String(selectedDate.getMinutes()).padStart(2, "0");
@@ -207,7 +218,16 @@ export default function RemindersScreen({ navigation }) {
 
   // Date picker handler
   const onDateChange = (event, selectedDate) => {
-    setShowDatePicker(false);
+    // On Android, picker closes automatically. On iOS, keep it open until user dismisses.
+    if (Platform.OS === "android") {
+      setShowDatePicker(false);
+    }
+
+    if (event.type === "dismissed") {
+      setShowDatePicker(false);
+      return;
+    }
+
     if (selectedDate) {
       setFormData({ ...formData, date: selectedDate });
     }
@@ -279,7 +299,16 @@ export default function RemindersScreen({ navigation }) {
               <Text style={styles.inputLabel}>Time</Text>
               <TouchableOpacity
                 style={styles.pickerButton}
-                onPress={() => setShowTimePicker(true)}
+                onPress={() => {
+                  // Set the date object for time picker
+                  const [hours, minutes] = (formData.time || "09:00").split(":");
+                  const date = new Date();
+                  date.setHours(parseInt(hours, 10) || 9);
+                  date.setMinutes(parseInt(minutes, 10) || 0);
+                  date.setSeconds(0);
+                  setTimePickerDate(date);
+                  setShowTimePicker(true);
+                }}
               >
                 <Icon name="clock-outline" size={20} color={figmaTokens.colors.gray600} />
                 <Text style={styles.pickerText}>{formData.time}</Text>
@@ -288,10 +317,10 @@ export default function RemindersScreen({ navigation }) {
 
             {showTimePicker && (
               <DateTimePicker
-                value={new Date(`2000-01-01T${formData.time}:00`)}
+                value={timePickerDate}
                 mode="time"
                 is24Hour={true}
-                display="default"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
                 onChange={onTimeChange}
               />
             )}
@@ -346,9 +375,9 @@ export default function RemindersScreen({ navigation }) {
 
                 {showDatePicker && (
                   <DateTimePicker
-                    value={formData.date}
+                    value={formData.date || new Date()}
                     mode="date"
-                    display="default"
+                    display={Platform.OS === "ios" ? "spinner" : "default"}
                     onChange={onDateChange}
                     minimumDate={new Date()}
                   />

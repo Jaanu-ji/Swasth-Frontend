@@ -270,7 +270,19 @@ export default function HealthHistoryScreen({ navigation }) {
   const getImageUrl = (filePath) => {
     if (!filePath) return null;
     if (filePath.startsWith('http')) return filePath;
-    return `https://swasth-bk.onrender.com/${filePath.replace(/\\/g, '/').replace('backend/', '')}`;
+
+    // Convert backslashes to forward slashes
+    let cleanPath = filePath.replace(/\\/g, '/');
+
+    // Extract only the uploads/... part from the full path
+    // Path could be like: C:/Users/.../backend/uploads/health-documents/file.jpg
+    // Or: /app/uploads/health-documents/file.jpg (on render.com)
+    const uploadsIndex = cleanPath.indexOf('uploads/');
+    if (uploadsIndex !== -1) {
+      cleanPath = cleanPath.substring(uploadsIndex);
+    }
+
+    return `https://swasth-bk.onrender.com/${cleanPath}`;
   };
 
   return (
@@ -520,17 +532,23 @@ export default function HealthHistoryScreen({ navigation }) {
         </Modal>
 
         {/* View Document Modal */}
-        <Modal visible={showViewModal} animationType="slide" transparent>
-          <View style={styles.viewModalOverlay}>
+        <Modal visible={showViewModal} animationType="slide" transparent={false}>
+          <SafeAreaView style={styles.viewModalOverlay}>
             <View style={styles.viewModalContent}>
               <View style={styles.viewModalHeader}>
-                <TouchableOpacity onPress={() => setShowViewModal(false)}>
-                  <Icon name="arrow-left" size={24} color={figmaTokens.colors.gray800} />
+                <TouchableOpacity
+                  onPress={() => setShowViewModal(false)}
+                  style={styles.backButton}
+                >
+                  <Icon name="arrow-left" size={26} color={figmaTokens.colors.gray800} />
                 </TouchableOpacity>
                 <Text style={styles.viewModalTitle} numberOfLines={1}>
                   {selectedDocument?.title}
                 </Text>
-                <TouchableOpacity onPress={() => handleDelete(selectedDocument)}>
+                <TouchableOpacity
+                  onPress={() => handleDelete(selectedDocument)}
+                  style={styles.deleteButton}
+                >
                   <Icon name="delete" size={24} color={figmaTokens.colors.red500} />
                 </TouchableOpacity>
               </View>
@@ -628,7 +646,7 @@ export default function HealthHistoryScreen({ navigation }) {
                 </ScrollView>
               )}
             </View>
-          </View>
+          </SafeAreaView>
         </Modal>
       </View>
     </SafeAreaView>
@@ -919,16 +937,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: figmaTokens.spacing['4'],
+    paddingHorizontal: figmaTokens.spacing['4'],
+    paddingVertical: figmaTokens.spacing['3'],
     borderBottomWidth: 1,
     borderBottomColor: figmaTokens.colors.gray200,
+    backgroundColor: figmaTokens.colors.white,
+  },
+  backButton: {
+    padding: figmaTokens.spacing['2'],
+    marginRight: figmaTokens.spacing['2'],
+  },
+  deleteButton: {
+    padding: figmaTokens.spacing['2'],
+    marginLeft: figmaTokens.spacing['2'],
   },
   viewModalTitle: {
     flex: 1,
     fontSize: figmaTokens.typography.fontSize.lg,
     fontWeight: figmaTokens.typography.fontWeight.semibold,
     color: figmaTokens.colors.gray900,
-    marginHorizontal: figmaTokens.spacing['4'],
+    textAlign: 'center',
   },
   viewModalScroll: { flex: 1 },
 
