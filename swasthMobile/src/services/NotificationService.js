@@ -5,22 +5,33 @@ import notifee, {
   AndroidImportance,
   AndroidCategory,
   RepeatFrequency,
+  AlarmType,
 } from '@notifee/react-native';
-import { Platform } from 'react-native';
+import { Platform, PermissionsAndroid, Alert, Linking } from 'react-native';
 
 class NotificationService {
   constructor() {
     this.channelId = 'swasth-reminders';
+    this.alarmChannelId = 'swasth-alarms';
   }
 
   // Initialize notification channels (call this on app start)
   async initialize() {
     try {
-      // Request permissions
+      // Request notification permission (Android 13+)
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+        );
+        console.log('Notification permission:', granted);
+      }
+
+      // Request permissions via notifee
       await notifee.requestPermission();
 
-      // Create channel for Android
+      // Create channels for Android
       if (Platform.OS === 'android') {
+        // Regular notification channel
         await notifee.createChannel({
           id: this.channelId,
           name: 'Health Reminders',
@@ -28,6 +39,17 @@ class NotificationService {
           importance: AndroidImportance.HIGH,
           sound: 'default',
           vibration: true,
+        });
+
+        // Alarm channel with maximum priority
+        await notifee.createChannel({
+          id: this.alarmChannelId,
+          name: 'Medicine Alarms',
+          description: 'High priority alarms for medicine reminders',
+          importance: AndroidImportance.HIGH,
+          sound: 'default',
+          vibration: true,
+          bypassDnd: true,
         });
       }
 
@@ -37,10 +59,47 @@ class NotificationService {
     }
   }
 
+  // Check if exact alarm permission is granted (Android 12+)
+  async checkExactAlarmPermission() {
+    if (Platform.OS !== 'android') return true;
+
+    try {
+      const settings = await notifee.getNotificationSettings();
+      // On Android 12+, check if we can schedule exact alarms
+      if (Platform.Version >= 31) {
+        const canScheduleExact = await notifee.canScheduleExactAlarms();
+        if (!canScheduleExact) {
+          Alert.alert(
+            'Alarm Permission Required',
+            'Please enable "Alarms & Reminders" permission in settings for medicine reminders to work properly.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Open Settings',
+                onPress: () => notifee.openAlarmPermissionSettings()
+              }
+            ]
+          );
+          return false;
+        }
+      }
+      return true;
+    } catch (error) {
+      console.error('Error checking alarm permission:', error);
+      return true; // Proceed anyway
+    }
+  }
+
   // Schedule a reminder notification
   async scheduleReminder(reminder) {
     try {
       const { _id, title, description, time, type, frequency, date } = reminder;
+
+      // Check exact alarm permission first
+      const hasPermission = await this.checkExactAlarmPermission();
+      if (!hasPermission) {
+        console.log('Exact alarm permission not granted, scheduling anyway...');
+      }
 
       // Parse time (format: "HH:mm")
       const [hours, minutes] = time.split(':').map(Number);
@@ -60,10 +119,13 @@ class NotificationService {
         triggerDate.setDate(triggerDate.getDate() + 1);
       }
 
-      // Create trigger based on frequency
+      // Create trigger based on frequency with exact alarm
       let trigger = {
         type: TriggerType.TIMESTAMP,
         timestamp: triggerDate.getTime(),
+        alarmManager: {
+          allowWhileIdle: true, // Fire even in Doze mode
+        },
       };
 
       // For daily reminders, add repeat frequency
@@ -73,23 +135,29 @@ class NotificationService {
         trigger.repeatFrequency = RepeatFrequency.WEEKLY;
       }
 
-      // Schedule the notification
+      // Schedule the notification with alarm-like settings
       await notifee.createTriggerNotification(
         {
           id: _id,
           title: type === 'Medication' ? `💊 ${title}` : `📅 ${title}`,
           body: description || (type === 'Medication' ? 'Time to take your medicine' : 'You have an appointment'),
           android: {
-            channelId: this.channelId,
+            channelId: this.alarmChannelId,
             importance: AndroidImportance.HIGH,
             category: AndroidCategory.ALARM,
             pressAction: {
               id: 'default',
             },
             sound: 'default',
-            vibrationPattern: [300, 500, 300, 500],
-            smallIcon: 'ic_notification', // Make sure this exists in android/app/src/main/res
-            largeIcon: type === 'Medication' ? 'pill' : 'calendar',
+            vibrationPattern: [0, 500, 200, 500, 200, 500, 200, 500],
+            smallIcon: 'ic_launcher', // Uses app icon
+            ongoing: false,
+            autoCancel: true,
+            showTimestamp: true,
+            timestamp: Date.now(),
+            fullScreenAction: {
+              id: 'default',
+            },
           },
           ios: {
             sound: 'default',
@@ -100,7 +168,7 @@ class NotificationService {
         trigger
       );
 
-      console.log(`Scheduled reminder: ${title} at ${time}`);
+      console.log(`Scheduled reminder: ${title} at ${triggerDate.toLocaleString()}`);
       return true;
     } catch (error) {
       console.error('Failed to schedule reminder:', error);
@@ -139,13 +207,18 @@ class NotificationService {
         title,
         body,
         android: {
-          channelId: this.channelId,
+          channelId: this.alarmChannelId,
           importance: AndroidImportance.HIGH,
+          category: AndroidCategory.ALARM,
           sound: 'default',
-          vibrationPattern: [300, 500],
+          vibrationPattern: [0, 500, 200, 500, 200, 500],
+          pressAction: {
+            id: 'default',
+          },
         },
         ios: {
           sound: 'default',
+          critical: true,
         },
       });
       return true;
@@ -153,6 +226,14 @@ class NotificationService {
       console.error('Failed to display notification:', error);
       return false;
     }
+  }
+
+  // Test notification - shows immediately with alarm
+  async testAlarm() {
+    return this.displayNotification(
+      '💊 Test Alarm',
+      'This is a test medicine reminder!'
+    );
   }
 
   // Get all scheduled notifications

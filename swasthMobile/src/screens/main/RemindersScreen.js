@@ -475,9 +475,20 @@ export default function RemindersScreen({ navigation }) {
             <Text style={styles.headerSubtitle}>{activeMember.name}</Text>
           )}
         </View>
-        <TouchableOpacity onPress={openAddModal} style={styles.addButton}>
-          <Icon name="plus" size={20} color={figmaTokens.colors.white} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <TouchableOpacity
+            onPress={() => {
+              NotificationService.testAlarm();
+              Alert.alert('Test Sent', 'Check your notification panel!');
+            }}
+            style={[styles.addButton, { backgroundColor: figmaTokens.colors.green500 }]}
+          >
+            <Icon name="bell-ring" size={20} color={figmaTokens.colors.white} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={openAddModal} style={styles.addButton}>
+            <Icon name="plus" size={20} color={figmaTokens.colors.white} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Tabs */}
