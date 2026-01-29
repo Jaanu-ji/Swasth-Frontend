@@ -532,29 +532,35 @@ export default function HealthHistoryScreen({ navigation }) {
         </Modal>
 
         {/* View Document Modal */}
-        <Modal visible={showViewModal} animationType="slide" transparent={false}>
-          <SafeAreaView style={styles.viewModalOverlay}>
-            <View style={styles.viewModalContent}>
-              <View style={styles.viewModalHeader}>
-                <TouchableOpacity
-                  onPress={() => setShowViewModal(false)}
-                  style={styles.backButton}
-                >
-                  <Icon name="arrow-left" size={26} color={figmaTokens.colors.gray800} />
-                </TouchableOpacity>
-                <Text style={styles.viewModalTitle} numberOfLines={1}>
-                  {selectedDocument?.title}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => handleDelete(selectedDocument)}
-                  style={styles.deleteButton}
-                >
-                  <Icon name="delete" size={24} color={figmaTokens.colors.red500} />
-                </TouchableOpacity>
-              </View>
+        <Modal
+          visible={showViewModal}
+          animationType="slide"
+          onRequestClose={() => setShowViewModal(false)}
+        >
+          <View style={styles.viewModalContainer}>
+            {/* Fixed Header */}
+            <View style={styles.viewModalHeader}>
+              <TouchableOpacity
+                onPress={() => setShowViewModal(false)}
+                style={styles.backButton}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Icon name="arrow-left" size={28} color={figmaTokens.colors.gray900} />
+              </TouchableOpacity>
+              <Text style={styles.viewModalTitle} numberOfLines={1}>
+                {selectedDocument?.title}
+              </Text>
+              <TouchableOpacity
+                onPress={() => handleDelete(selectedDocument)}
+                style={styles.deleteButton}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Icon name="delete-outline" size={26} color={figmaTokens.colors.red500} />
+              </TouchableOpacity>
+            </View>
 
-              {selectedDocument && (
-                <ScrollView style={styles.viewModalScroll}>
+            {selectedDocument && (
+              <ScrollView style={styles.viewModalScroll} showsVerticalScrollIndicator={false}>
                   {/* Main Image */}
                   {selectedDocument.images && selectedDocument.images.length > 0 && (
                     <View style={styles.mainImageContainer}>
@@ -643,10 +649,9 @@ export default function HealthHistoryScreen({ navigation }) {
                       </View>
                     )}
                   </View>
-                </ScrollView>
-              )}
-            </View>
-          </SafeAreaView>
+              </ScrollView>
+            )}
+          </View>
         </Modal>
       </View>
     </SafeAreaView>
@@ -928,28 +933,35 @@ const styles = StyleSheet.create({
   },
 
   // View Modal
-  viewModalOverlay: {
+  viewModalContainer: {
     flex: 1,
     backgroundColor: figmaTokens.colors.white,
   },
-  viewModalContent: { flex: 1 },
   viewModalHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: figmaTokens.spacing['4'],
-    paddingVertical: figmaTokens.spacing['3'],
+    paddingTop: Platform.OS === 'ios' ? 50 : figmaTokens.spacing['4'],
+    paddingBottom: figmaTokens.spacing['4'],
     borderBottomWidth: 1,
     borderBottomColor: figmaTokens.colors.gray200,
     backgroundColor: figmaTokens.colors.white,
   },
   backButton: {
-    padding: figmaTokens.spacing['2'],
-    marginRight: figmaTokens.spacing['2'],
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: figmaTokens.colors.gray100,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   deleteButton: {
-    padding: figmaTokens.spacing['2'],
-    marginLeft: figmaTokens.spacing['2'],
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: figmaTokens.colors.red50,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   viewModalTitle: {
     flex: 1,
@@ -957,6 +969,7 @@ const styles = StyleSheet.create({
     fontWeight: figmaTokens.typography.fontWeight.semibold,
     color: figmaTokens.colors.gray900,
     textAlign: 'center',
+    marginHorizontal: figmaTokens.spacing['3'],
   },
   viewModalScroll: { flex: 1 },
 

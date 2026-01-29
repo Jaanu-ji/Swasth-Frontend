@@ -315,16 +315,6 @@ export default function RemindersScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
-            {showTimePicker && (
-              <DateTimePicker
-                value={timePickerDate}
-                mode="time"
-                is24Hour={true}
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={onTimeChange}
-              />
-            )}
-
             {/* Frequency (for medication) */}
             {formData.type === "Medication" && (
               <View style={styles.inputGroup}>
@@ -372,16 +362,6 @@ export default function RemindersScreen({ navigation }) {
                     </Text>
                   </TouchableOpacity>
                 </View>
-
-                {showDatePicker && (
-                  <DateTimePicker
-                    value={formData.date || new Date()}
-                    mode="date"
-                    display={Platform.OS === "ios" ? "spinner" : "default"}
-                    onChange={onDateChange}
-                    minimumDate={new Date()}
-                  />
-                )}
 
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Doctor Name</Text>
@@ -657,6 +637,28 @@ export default function RemindersScreen({ navigation }) {
       </ScrollView>
 
       {renderAddModal()}
+
+      {/* Time Picker - Outside Modal to prevent crash */}
+      {showTimePicker && (
+        <DateTimePicker
+          value={timePickerDate}
+          mode="time"
+          is24Hour={true}
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={onTimeChange}
+        />
+      )}
+
+      {/* Date Picker - Outside Modal to prevent crash */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={formData.date || new Date()}
+          mode="date"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={onDateChange}
+          minimumDate={new Date()}
+        />
+      )}
     </SafeAreaView>
   );
 }
