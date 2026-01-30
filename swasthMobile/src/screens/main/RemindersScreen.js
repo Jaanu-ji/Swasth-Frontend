@@ -477,9 +477,15 @@ export default function RemindersScreen({ navigation }) {
         </View>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <TouchableOpacity
-            onPress={() => {
-              NotificationService.testAlarm();
-              Alert.alert('Test Sent', 'Check your notification panel!');
+            onPress={async () => {
+              try {
+                const result = await NotificationService.testAlarm();
+                if (result) {
+                  Alert.alert('Success', 'Notification sent! Check your notification panel.');
+                }
+              } catch (error) {
+                Alert.alert('Error', 'Notification failed: ' + (error.message || 'Unknown error'));
+              }
             }}
             style={[styles.addButton, { backgroundColor: figmaTokens.colors.green500 }]}
           >

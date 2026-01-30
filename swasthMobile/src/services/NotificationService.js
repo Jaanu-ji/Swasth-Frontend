@@ -203,13 +203,23 @@ class NotificationService {
   // Display an immediate notification (for testing)
   async displayNotification(title, body) {
     try {
+      // Ensure channel exists before displaying
+      if (Platform.OS === 'android') {
+        await notifee.createChannel({
+          id: this.alarmChannelId,
+          name: 'Medicine Alarms',
+          importance: AndroidImportance.HIGH,
+          sound: 'default',
+          vibration: true,
+        });
+      }
+
       await notifee.displayNotification({
         title,
         body,
         android: {
           channelId: this.alarmChannelId,
           importance: AndroidImportance.HIGH,
-          category: AndroidCategory.ALARM,
           sound: 'default',
           vibrationPattern: [0, 500, 200, 500, 200, 500],
           pressAction: {
@@ -218,22 +228,37 @@ class NotificationService {
         },
         ios: {
           sound: 'default',
-          critical: true,
         },
       });
+      console.log('Notification displayed successfully');
       return true;
     } catch (error) {
       console.error('Failed to display notification:', error);
+      Alert.alert('Notification Error', error.message || 'Failed to show notification');
       return false;
     }
   }
 
   // Test notification - shows immediately with alarm
   async testAlarm() {
-    return this.displayNotification(
-      '💊 Test Alarm',
-      'This is a test medicine reminder!'
-    );
+    try {
+      // Request permission first
+      if (Platform.OS === 'android') {
+        await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+        );
+      }
+      await notifee.requestPermission();
+
+      return this.displayNotification(
+        '💊 Test Alarm',
+        'This is a test medicine reminder!'
+      );
+    } catch (error) {
+      console.error('Test alarm failed:', error);
+      Alert.alert('Error', error.message || 'Failed to test alarm');
+      return false;
+    }
   }
 
   // Get all scheduled notifications
