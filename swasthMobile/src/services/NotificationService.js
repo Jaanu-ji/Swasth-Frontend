@@ -149,7 +149,7 @@ class NotificationService {
               id: 'default',
             },
             sound: 'default',
-            vibrationPattern: [0, 500, 200, 500, 200, 500, 200, 500],
+            vibrationPattern: [300, 500, 300, 500],
             smallIcon: 'ic_launcher', // Uses app icon
             ongoing: false,
             autoCancel: true,
@@ -221,7 +221,7 @@ class NotificationService {
           channelId: this.alarmChannelId,
           importance: AndroidImportance.HIGH,
           sound: 'default',
-          vibrationPattern: [0, 500, 200, 500, 200, 500],
+          vibrationPattern: [300, 500, 300, 500],
           pressAction: {
             id: 'default',
           },
