@@ -169,10 +169,11 @@ class NotificationService {
       );
 
       console.log(`Scheduled reminder: ${title} at ${triggerDate.toLocaleString()}`);
-      return true;
+      return { success: true, scheduledTime: triggerDate };
     } catch (error) {
       console.error('Failed to schedule reminder:', error);
-      return false;
+      Alert.alert('Schedule Error', error.message || 'Failed to schedule reminder');
+      return { success: false, error: error.message };
     }
   }
 

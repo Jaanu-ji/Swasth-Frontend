@@ -180,8 +180,9 @@ export default function RemindersScreen({ navigation }) {
       const result = await addReminder(payload);
 
       // Schedule notification for this reminder
+      let scheduledInfo = null;
       if (result && result._id) {
-        await NotificationService.scheduleReminder({
+        scheduledInfo = await NotificationService.scheduleReminder({
           _id: result._id,
           title: formData.title.trim(),
           description: formData.description.trim(),
@@ -194,7 +195,19 @@ export default function RemindersScreen({ navigation }) {
 
       setShowAddModal(false);
       loadReminders();
-      Alert.alert("Success", "Reminder added with notification!");
+
+      // Show when the notification will trigger
+      if (scheduledInfo && scheduledInfo.scheduledTime) {
+        const scheduledDate = scheduledInfo.scheduledTime;
+        const timeStr = scheduledDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const dateStr = scheduledDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        Alert.alert(
+          "Reminder Scheduled!",
+          `Notification will come at ${timeStr} on ${dateStr}${formData.frequency === 'Daily' ? ' (Daily)' : formData.frequency === 'Weekly' ? ' (Weekly)' : ''}`
+        );
+      } else {
+        Alert.alert("Success", "Reminder added!");
+      }
     } catch (err) {
       Alert.alert("Error", err.message || "Failed to add reminder");
     } finally {
