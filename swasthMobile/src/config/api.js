@@ -134,12 +134,49 @@ export const getTodayMeals = async (email, memberId = null) => {
 /* ---------------- EMERGENCY ---------------- */
 export const getEmergencyCard = async (email) => {
   const res = await api.get(`/emergency/${email}`);
-  return res.data;
+  // Transform backend structure to frontend structure
+  const card = res.data;
+  if (card && card.personalInfo) {
+    return {
+      name: card.personalInfo.name,
+      age: card.personalInfo.age,
+      bloodType: card.personalInfo.bloodType,
+      height: card.personalInfo.height,
+      weight: card.personalInfo.weight,
+      emergencyContacts: card.emergencyContacts || [],
+      allergies: card.medicalInfo?.allergies || [],
+      medicalConditions: card.medicalInfo?.conditions || [],
+      currentMedications: card.medicalInfo?.medications || [],
+    };
+  }
+  return null;
 };
 
 export const createEmergencyCard = async (email, data) => {
-  const res = await api.post("/emergency", { email, ...data });
+  // Transform frontend structure to backend structure
+  const payload = {
+    email,
+    personalInfo: {
+      name: data.name,
+      age: data.age,
+      bloodType: data.bloodType,
+      height: data.height,
+      weight: data.weight,
+    },
+    emergencyContacts: data.emergencyContacts || [],
+    medicalInfo: {
+      allergies: data.allergies || [],
+      conditions: data.medicalConditions || [],
+      medications: data.currentMedications || [],
+    },
+  };
+  const res = await api.post("/emergency", payload);
   return res.data;
+};
+
+// Update uses same endpoint (upsert)
+export const updateEmergencyCard = async (email, data) => {
+  return createEmergencyCard(email, data);
 };
 
 /* ---------------- OCR ---------------- */

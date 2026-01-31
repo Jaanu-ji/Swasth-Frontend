@@ -139,14 +139,14 @@ export default function DashboardScreen({ navigation }) {
   const mainFeatures = [
     { title: 'Health Tracker', icon: 'heart-pulse', screen: 'HealthTracker', color: figmaTokens.colors.rose500 },
     { title: 'Family Profiles', icon: 'account-group', screen: 'Family', color: figmaTokens.colors.blue500 },
-    { title: 'Meal Planner', icon: 'food-apple', screen: 'Diet', color: figmaTokens.colors.green500 },
+    { title: 'Emergency Card', icon: 'shield-account', screen: 'EmergencyCard', color: figmaTokens.colors.red500 },
     { title: 'Health History', icon: 'folder-heart', screen: 'HealthHistory', color: figmaTokens.colors.orange500 },
     { title: 'Analytics', icon: 'chart-line', screen: 'HealthAnalytics', color: figmaTokens.colors.purple500 },
     { title: 'Reminders', icon: 'bell', screen: 'Reminders', color: figmaTokens.colors.yellow500 },
   ];
 
   const extraFeatures = [
-    { title: 'Emergency Card', icon: 'shield', screen: 'EmergencyCard' },
+    { title: 'Meal Planner', icon: 'food-apple', screen: 'Diet' },
     { title: 'AI Suggestions', icon: 'lightbulb-on', screen: 'AIInsights' },
     { title: 'Report Scanner', icon: 'file-document', screen: 'OCR' },
   ];
