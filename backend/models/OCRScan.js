@@ -11,18 +11,24 @@ const ocrScanSchema = new mongoose.Schema({
   extractedText: String,
   extractedFields: mongoose.Schema.Types.Mixed,
   aiAnalysis: {
+    isValidReport: Boolean,
+    isImageClear: Boolean,
+    errorMessage: String,
+    reportType: String,
     summary: String,
     healthMetrics: [{
       type: String,
       value: String,
       unit: String,
       status: String,
+      explanation: String,
     }],
     concerns: [String],
     recommendations: [String],
+    overallStatus: { type: String, enum: ['good', 'attention_needed', 'critical'] },
     confidence: Number,
   },
-  status: { type: String, enum: ['processing', 'completed', 'failed'], default: 'processing' },
+  status: { type: String, enum: ['processing', 'completed', 'failed', 'invalid', 'unclear'], default: 'processing' },
   error: String,
 }, { timestamps: true });
 

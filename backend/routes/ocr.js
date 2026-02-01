@@ -61,29 +61,39 @@ async function analyzeReportWithAI(imagePath, reportType) {
     const imageBuffer = fs.readFileSync(imagePath);
     const base64Image = imageBuffer.toString('base64');
 
-    const prompt = `Analyze this ${reportType} medical report. Extract all important health information and provide a structured analysis.
+    const prompt = `You are a medical report analyzer. First, determine if this image is:
+1. A valid medical report/test result (blood test, X-ray, prescription, lab report, etc.)
+2. Clear enough to read
 
 Return a JSON object with these fields:
 {
-  "summary": "A brief summary of the report (2-3 sentences)",
+  "isValidReport": true/false (is this a medical report or test?),
+  "isImageClear": true/false (is the image clear enough to read?),
+  "errorMessage": "Only if isValidReport=false or isImageClear=false, explain what's wrong in simple Hindi-English mix",
+  "reportType": "Blood Test / X-Ray / Prescription / Lab Report / Other",
+  "summary": "A simple, easy-to-understand summary in Hindi-English mix (Hinglish) explaining what the report says. Use simple language that a common person can understand. Example: 'Aapka blood sugar level 120 mg/dL hai jo normal range mein hai. Cholesterol thoda high hai (220 mg/dL), diet mein oil kam karein.'",
   "healthMetrics": [
     {
       "type": "heartRate" | "bloodPressure" | "sugar" | "temperature" | "weight" | "cholesterol" | "hemoglobin" | "other",
       "value": "the measured value",
       "unit": "the unit (bpm, mmHg, mg/dL, etc.)",
-      "status": "normal" | "high" | "low"
+      "status": "normal" | "high" | "low",
+      "explanation": "Simple explanation in Hinglish what this means"
     }
   ],
-  "concerns": ["list of any health concerns or abnormalities found"],
-  "recommendations": ["list of medical recommendations or next steps"],
-  "confidence": 0.95 (a number between 0 and 1 indicating confidence in the analysis)
+  "concerns": ["List health concerns in simple Hinglish that common person can understand"],
+  "recommendations": ["Simple recommendations in Hinglish for the patient"],
+  "overallStatus": "good" | "attention_needed" | "critical",
+  "confidence": 0.95 (a number between 0 and 1)
 }
 
-Important:
-- For healthMetrics, use standard type names like "heartRate", "bloodPressure", "sugar", "temperature", "weight"
-- Only include metrics that are actually present in the report
-- Be accurate with the status (normal/high/low) based on standard medical ranges
-- If you can't read something clearly, don't guess`;
+IMPORTANT RULES:
+1. If the image is NOT a medical report (like selfie, random photo, food, etc.), set isValidReport=false and provide errorMessage
+2. If the image is blurry or text is not readable, set isImageClear=false and provide errorMessage
+3. Write summary and explanations in simple Hinglish (Hindi-English mix) so common people can understand
+4. Only include healthMetrics that are actually visible in the report
+5. Be accurate with status (normal/high/low) based on standard medical ranges
+6. If you can't read something clearly, don't include it in healthMetrics`;
 
     console.log('[OCR AI] Calling OpenAI API with model: gpt-4o');
     console.log('[OCR AI] Image size:', imageBuffer.length, 'bytes');
@@ -102,7 +112,7 @@ Important:
           },
         ],
       }],
-      max_tokens: 1500,
+      max_tokens: 2000,
       temperature: 0.3,
     });
 
@@ -179,7 +189,36 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         console.log('[OCR Background] Starting AI analysis...');
         const aiAnalysis = await analyzeReportWithAI(file.path, reportType || 'General');
 
-        // Step 3: Auto-create health logs from metrics
+        // Step 3: Check if image is valid and clear
+        if (aiAnalysis) {
+          // Check if not a valid report
+          if (aiAnalysis.isValidReport === false) {
+            console.log('[OCR Background] Invalid report image detected');
+            await OCRScan.findByIdAndUpdate(scan._id, {
+              extractedText,
+              extractedFields: { text: extractedText },
+              aiAnalysis: aiAnalysis,
+              status: 'invalid',
+              error: aiAnalysis.errorMessage || 'Ye medical report nahi hai. Please sirf medical reports ya test results ki photo dalein.',
+            });
+            return;
+          }
+
+          // Check if image is unclear
+          if (aiAnalysis.isImageClear === false) {
+            console.log('[OCR Background] Unclear image detected');
+            await OCRScan.findByIdAndUpdate(scan._id, {
+              extractedText,
+              extractedFields: { text: extractedText },
+              aiAnalysis: aiAnalysis,
+              status: 'unclear',
+              error: aiAnalysis.errorMessage || 'Image clear nahi hai. Please dobara ek clear photo lein jisme text properly dikh raha ho.',
+            });
+            return;
+          }
+        }
+
+        // Step 4: Auto-create health logs from metrics (only for valid reports)
         if (aiAnalysis && aiAnalysis.healthMetrics && Array.isArray(aiAnalysis.healthMetrics)) {
           console.log('[OCR Background] Creating health logs from', aiAnalysis.healthMetrics.length, 'metrics');
 
@@ -199,7 +238,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
           }
         }
 
-        // Step 4: Update scan with results
+        // Step 5: Update scan with results
         await OCRScan.findByIdAndUpdate(scan._id, {
           extractedText,
           extractedFields: {
@@ -241,8 +280,10 @@ router.get('/status/:scanId', async (req, res) => {
 
     res.json({
       status: scan.status,
+      error: scan.error || null,
       extractedText: scan.extractedText || '',
       extractedFields: scan.extractedFields || {},
+      aiAnalysis: scan.aiAnalysis || null,
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch OCR status' });
