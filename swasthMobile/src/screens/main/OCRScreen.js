@@ -404,16 +404,23 @@ export default function OCRScreen({ navigation }) {
 
               {scanStatus === 'success' && lastScanResult && (
                 <View style={styles.resultContainer}>
-                  <View style={styles.successHeader}>
-                    <View style={styles.successIconBg}>
-                      <Icon name="check-circle" size={48} color={figmaTokens.colors.green600} />
+                  {/* Report Type Header */}
+                  <View style={styles.reportTypeHeader}>
+                    <View style={styles.reportTypeIconBg}>
+                      <Icon name="file-document-check" size={32} color={figmaTokens.colors.purple600} />
                     </View>
-                    <Text style={styles.successTitle}>Report Analyzed!</Text>
+                    <Text style={styles.reportTypeText}>
+                      {lastScanResult.aiAnalysis?.reportType || 'Medical Report'}
+                    </Text>
                   </View>
+
+                  {/* AI Summary - Main Focus */}
                   {renderAISummary(lastScanResult.aiAnalysis, lastScanResult.error)}
-                  <TouchableOpacity style={styles.newScanButton} onPress={resetScan}>
-                    <Icon name="camera-plus" size={20} color={figmaTokens.colors.white} />
-                    <Text style={styles.newScanButtonText}>Scan Another Report</Text>
+
+                  {/* Scan Another - Small Link */}
+                  <TouchableOpacity style={styles.scanAnotherLink} onPress={resetScan}>
+                    <Icon name="plus-circle-outline" size={18} color={figmaTokens.colors.purple600} />
+                    <Text style={styles.scanAnotherText}>Naya Report Scan Karein</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -630,22 +637,40 @@ const styles = StyleSheet.create({
     color: figmaTokens.colors.gray600,
   },
   resultContainer: {
-    paddingVertical: figmaTokens.spacing['4'],
+    paddingVertical: figmaTokens.spacing['2'],
   },
-  successHeader: {
+  reportTypeHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: figmaTokens.spacing['6'],
-  },
-  successIconBg: {
-    backgroundColor: figmaTokens.colors.green100,
-    borderRadius: figmaTokens.borderRadius.full,
+    gap: figmaTokens.spacing['3'],
+    marginBottom: figmaTokens.spacing['5'],
+    backgroundColor: figmaTokens.colors.purple50,
     padding: figmaTokens.spacing['4'],
-    marginBottom: figmaTokens.spacing['3'],
+    borderRadius: figmaTokens.borderRadius.xl,
   },
-  successTitle: {
-    fontSize: figmaTokens.typography.fontSize.xl,
+  reportTypeIconBg: {
+    backgroundColor: figmaTokens.colors.purple100,
+    borderRadius: figmaTokens.borderRadius.lg,
+    padding: figmaTokens.spacing['2'],
+  },
+  reportTypeText: {
+    fontSize: figmaTokens.typography.fontSize.lg,
+    fontWeight: figmaTokens.typography.fontWeight.semibold,
+    color: figmaTokens.colors.purple900,
+    flex: 1,
+  },
+  scanAnotherLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: figmaTokens.spacing['2'],
+    paddingVertical: figmaTokens.spacing['4'],
+    marginTop: figmaTokens.spacing['4'],
+  },
+  scanAnotherText: {
+    fontSize: figmaTokens.typography.fontSize.base,
+    color: figmaTokens.colors.purple600,
     fontWeight: figmaTokens.typography.fontWeight.medium,
-    color: figmaTokens.colors.gray900,
   },
   errorContainer: {
     alignItems: 'center',
@@ -685,21 +710,6 @@ const styles = StyleSheet.create({
     borderRadius: figmaTokens.borderRadius.xl,
   },
   retryButtonText: {
-    color: figmaTokens.colors.white,
-    fontSize: figmaTokens.typography.fontSize.base,
-    fontWeight: figmaTokens.typography.fontWeight.medium,
-  },
-  newScanButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: figmaTokens.spacing['2'],
-    backgroundColor: figmaTokens.colors.purple500,
-    paddingVertical: figmaTokens.spacing['4'],
-    borderRadius: figmaTokens.borderRadius.xl,
-    marginTop: figmaTokens.spacing['6'],
-  },
-  newScanButtonText: {
     color: figmaTokens.colors.white,
     fontSize: figmaTokens.typography.fontSize.base,
     fontWeight: figmaTokens.typography.fontWeight.medium,

@@ -61,39 +61,60 @@ async function analyzeReportWithAI(imagePath, reportType) {
     const imageBuffer = fs.readFileSync(imagePath);
     const base64Image = imageBuffer.toString('base64');
 
-    const prompt = `You are a medical report analyzer. First, determine if this image is:
-1. A valid medical report/test result (blood test, X-ray, prescription, lab report, etc.)
-2. Clear enough to read
+    const prompt = `You are a STRICT medical report validator and analyzer.
 
-Return a JSON object with these fields:
+STEP 1 - VALIDATION (VERY STRICT):
+Look at this image and determine:
+1. Is this ACTUALLY a medical document? Valid examples ONLY:
+   - Lab test reports (blood test, urine test, etc.)
+   - X-ray/MRI/CT scan reports
+   - Doctor prescriptions with medicines
+   - Hospital discharge summaries
+   - Medical bills with test details
+
+2. INVALID examples (MUST reject these):
+   - Selfies or photos of people
+   - Food photos
+   - Random objects or scenes
+   - Screenshots of apps/websites
+   - Documents without medical data (ID cards, bills, etc.)
+   - Blurry images where text cannot be read
+   - Photos of medicine boxes (without prescription)
+
+STEP 2 - Return JSON:
 {
-  "isValidReport": true/false (is this a medical report or test?),
-  "isImageClear": true/false (is the image clear enough to read?),
-  "errorMessage": "Only if isValidReport=false or isImageClear=false, explain what's wrong in simple Hindi-English mix",
-  "reportType": "Blood Test / X-Ray / Prescription / Lab Report / Other",
-  "summary": "A simple, easy-to-understand summary in Hindi-English mix (Hinglish) explaining what the report says. Use simple language that a common person can understand. Example: 'Aapka blood sugar level 120 mg/dL hai jo normal range mein hai. Cholesterol thoda high hai (220 mg/dL), diet mein oil kam karein.'",
-  "healthMetrics": [
-    {
-      "type": "heartRate" | "bloodPressure" | "sugar" | "temperature" | "weight" | "cholesterol" | "hemoglobin" | "other",
-      "value": "the measured value",
-      "unit": "the unit (bpm, mmHg, mg/dL, etc.)",
-      "status": "normal" | "high" | "low",
-      "explanation": "Simple explanation in Hinglish what this means"
-    }
-  ],
-  "concerns": ["List health concerns in simple Hinglish that common person can understand"],
-  "recommendations": ["Simple recommendations in Hinglish for the patient"],
-  "overallStatus": "good" | "attention_needed" | "critical",
-  "confidence": 0.95 (a number between 0 and 1)
+  "isValidReport": false,
+  "isImageClear": true,
+  "errorMessage": "Ye medical report nahi hai. Aapne [describe what image shows] ki photo di hai. Please sirf medical test reports, prescriptions, ya lab results ki photo dalein."
 }
 
-IMPORTANT RULES:
-1. If the image is NOT a medical report (like selfie, random photo, food, etc.), set isValidReport=false and provide errorMessage
-2. If the image is blurry or text is not readable, set isImageClear=false and provide errorMessage
-3. Write summary and explanations in simple Hinglish (Hindi-English mix) so common people can understand
-4. Only include healthMetrics that are actually visible in the report
-5. Be accurate with status (normal/high/low) based on standard medical ranges
-6. If you can't read something clearly, don't include it in healthMetrics`;
+OR if valid medical report:
+{
+  "isValidReport": true,
+  "isImageClear": true,
+  "reportType": "Blood Test / X-Ray / Prescription / Lab Report / Other",
+  "summary": "Write a detailed 3-5 sentence summary in Hinglish explaining: 1) What type of report this is, 2) Key findings, 3) What patient should know. Example: 'Ye aapka Complete Blood Count (CBC) report hai. Hemoglobin 12.5 g/dL hai jo normal hai. White blood cells bhi normal range mein hain. Overall report theek hai, koi chinta ki baat nahi.'",
+  "healthMetrics": [
+    {
+      "type": "hemoglobin" | "sugar" | "cholesterol" | "bloodPressure" | "other",
+      "value": "actual value from report",
+      "unit": "mg/dL, g/dL, etc.",
+      "status": "normal" | "high" | "low",
+      "explanation": "Hinglish explanation"
+    }
+  ],
+  "concerns": ["List any health concerns in Hinglish - only if values are abnormal"],
+  "recommendations": ["Practical recommendations in Hinglish based on report findings"],
+  "overallStatus": "good" | "attention_needed" | "critical"
+}
+
+CRITICAL RULES:
+1. BE VERY STRICT - When in doubt, set isValidReport=false
+2. Random photos, selfies, food = ALWAYS isValidReport=false
+3. If image is blurry and you cannot read ANY text = isImageClear=false
+4. Only set isValidReport=true if you can clearly see medical test data or prescription
+5. Summary should be detailed and helpful, not just "report analyzed"
+6. Always respond in Hinglish (Hindi-English mix) for Indian users`;
 
     console.log('[OCR AI] Calling OpenAI API with model: gpt-4o');
     console.log('[OCR AI] Image size:', imageBuffer.length, 'bytes');
