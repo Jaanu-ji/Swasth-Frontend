@@ -1,0 +1,76 @@
+# Swasth App - Development Changelog
+
+Yahan saare changes aur updates documented hain.
+
+---
+
+## 2 February 2026
+
+### Dashboard UI Update
+**Files Changed:**
+- `swasthMobile/src/screens/main/DashboardScreen.js`
+
+**Changes:**
+1. Header mein Quick Stats (Heart Rate, Steps, Water, Calories) hataye
+2. Header mein 2 Quick Action cards add kiye:
+   - Emergency Card (rose/pink color)
+   - Report Scanner (purple color)
+3. "More Features" section completely remove kiya
+4. Main Features grid mein 6 items rakhe:
+   - Health Tracker
+   - Family Profiles
+   - Meal Planner
+   - Health History
+   - Analytics
+   - Reminders
+
+**Why:** Pehle wala redesign confusing tha, user ne cleaner layout maanga
+
+---
+
+### Report Scanner - Image Validation Fix
+**Files Changed:**
+- `backend/routes/ocr.js`
+- `swasthMobile/src/screens/main/OCRScreen.js`
+
+**Problem:**
+- Random images (selfies, food photos) accept ho rahi thi
+- "Analysis is ready" bol raha tha jabki report nahi thi
+- Summary properly nahi dikh rahi thi
+
+**Backend Fix (`backend/routes/ocr.js`):**
+1. AI prompt ko bahut strict banaya
+2. Clear rules define kiye:
+   - Valid: Lab reports, X-rays, prescriptions, hospital documents
+   - Invalid: Selfies, food, random objects, screenshots, blurry images
+3. Error messages Hinglish mein - "Aapne [kya photo hai] ki photo di hai..."
+
+**Frontend Fix (`swasthMobile/src/screens/main/OCRScreen.js`):**
+1. Success view redesigned:
+   - Report Type header (Blood Test, X-Ray, etc.) prominently
+   - AI Summary main focus mein
+   - "Scan Another Report" button ko chota link banaya
+2. Better visual hierarchy
+
+**Result:**
+- Random photos reject hongi with clear message
+- Valid reports ka detailed summary dikhega
+- Clean, focused UI
+
+---
+
+## Previous Updates (from Git History)
+
+### ce39baa - Redesign Dashboard with new layout
+### 9c1c78a - Enhance Report Scanner with AI summary and image validation
+### 812b883 - Swap Meal Planner/Emergency Card positions and fix Emergency Card save
+### 2779676 - Update app name to Health Center and add new logo
+### bb8ddf4 - Add scheduled time confirmation when saving reminder
+
+---
+
+## Notes
+
+- Backend hosted hai, changes auto-deploy hote hain
+- Mobile app ke liye har major change pe naya APK build karna padta hai
+- APK files git mein commit nahi karte (SwasthApp-v1.3.apk, v1.4.apk local mein hain)
